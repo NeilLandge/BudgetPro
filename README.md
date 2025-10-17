@@ -97,11 +97,10 @@ budgetpro/
 └── README.md
 
 Screenshots 📸
-Dashboard
+![Dashboard](screenshots/dashboard.png)
+![Landing Page](screenshots/landing-page.png)
+![Signup Page](screenshots/signup-page.png)
 
-Add Transaction
-
-Budget Overview
 
 Future Enhancements ✨
 Direct email OTP delivery
