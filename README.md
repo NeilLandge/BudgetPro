@@ -100,9 +100,9 @@ budgetpro/
 └── README.md
 
 Screenshots 📸
-![Dashboard](screenshots/dashboard.png)
-![Landing Page](screenshots/landing-page.png)
-![Signup Page](screenshots/signup-page.png)
+![Dashboard](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/dashboard.png)
+![Landing Page](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/landing-page.png)
+![Signup Page](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/signup-page.png)
 
 Future Enhancements ✨
 Direct email OTP delivery
