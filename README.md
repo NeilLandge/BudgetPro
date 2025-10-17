@@ -93,14 +93,16 @@ budgetpro/
 │   ├── server.js
 │   ├── package.json
 │   └── .env
-├── screenshots/   # Demo screenshots for UI
+├── screenshots/
+    ├── dashboard.png
+    ├── landing-page.png
+    ├── signup-page.png     # Demo screenshots for UI
 └── README.md
 
 Screenshots 📸
 ![Dashboard](screenshots/dashboard.png)
 ![Landing Page](screenshots/landing-page.png)
 ![Signup Page](screenshots/signup-page.png)
-
 
 Future Enhancements ✨
 Direct email OTP delivery
