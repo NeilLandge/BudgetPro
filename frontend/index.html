@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetPro - Smart Expense & Budget Tracker</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/landing.css">
+</head>
+<body class="landing-page">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+                        <path d="M16 8L22 14L16 20L10 14L16 8Z" fill="white"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                                <stop offset="0%" stop-color="#3b82f6"/>
+                                <stop offset="100%" stop-color="#1e40af"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span>BudgetPro</span>
+                </div>
+                <div class="nav-links">
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#about">About</a>
+                    <button class="btn-secondary" onclick="window.location.href='signin.html'">Sign In</button>
+                    <button class="btn-primary" onclick="window.location.href='signup.html'">Get Started</button>
+                </div>
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#about">About</a>
+        <button class="btn-secondary" onclick="window.location.href='signin.html'">Sign In</button>
+        <button class="btn-primary" onclick="window.location.href='signup.html'">Get Started</button>
+    </div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-text">
+                    <h1 class="hero-title">
+                        Take Control of Your <span class="gradient-text">Finances</span>
+                    </h1>
+                    <p class="hero-subtitle">
+                        Track expenses, set budgets, and achieve your financial goals with BudgetPro - 
+                        the most comprehensive budget tracking platform.
+                    </p>
+                    <div class="hero-cta">
+                        <button class="btn-primary btn-lg" onclick="window.location.href='signup.html'">
+                            Start Free Trial
+                        </button>
+                        <button class="btn-secondary btn-lg" onclick="document.getElementById('features').scrollIntoView({behavior: 'smooth'})">
+                            Learn More
+                        </button>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="stat">
+                            <div class="stat-number">50K+</div>
+                            <div class="stat-label">Active Users</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">₹2M+</div>
+                            <div class="stat-label">Money Saved</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number">4.9/5</div>
+                            <div class="stat-label">User Rating</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-image">
+                    <div class="dashboard-preview">
+                        <div class="preview-card card-1">
+                            <div class="preview-icon">💰</div>
+                            <div class="preview-text">
+                                <div class="preview-label">Total Balance</div>
+                                <div class="preview-value">₹100000</div>
+                            </div>
+                        </div>
+                        <div class="preview-card card-2">
+                            <div class="preview-icon">📊</div>
+                            <div class="preview-text">
+                                <div class="preview-label">This Month</div>
+                                <div class="preview-value">₹28000</div>
+                            </div>
+                        </div>
+                        <div class="preview-card card-3">
+                            <div class="preview-icon">🎯</div>
+                            <div class="preview-text">
+                                <div class="preview-label">Budget Left</div>
+                                <div class="preview-value">₹72000</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">Everything you need to manage your finances effectively</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon blue">📊</div>
+                    <h3>Smart Analytics</h3>
+                    <p>Get detailed insights into your spending patterns with interactive charts and reports</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon purple">💳</div>
+                    <h3>Multiple Accounts</h3>
+                    <p>Track all your accounts in one place - bank accounts, credit cards, and cash</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon pink">🎯</div>
+                    <h3>Budget Goals</h3>
+                    <p>Set custom budgets for different categories and get alerts when you're close to limits</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon yellow">📱</div>
+                    <h3>Mobile Ready</h3>
+                    <p>Access your finances anywhere with our responsive web application</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon green">🔒</div>
+                    <h3>Secure & Private</h3>
+                    <p>Bank-level encryption keeps your financial data safe and secure</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon orange">📈</div>
+                    <h3>Financial Reports</h3>
+                    <p>Generate comprehensive reports for better financial planning</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section id="pricing" class="pricing">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Choose Your Plan</h2>
+                <p class="section-subtitle">Start free, upgrade when you need more</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card">
+                    <div class="pricing-header">
+                        <h3>Free</h3>
+                        <div class="price">
+                            <span class="currency">₹</span>
+                            <span class="amount">0</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Basic expense tracking</li>
+                        <li>✓ Up to 3 budget categories</li>
+                        <li>✓ Monthly reports</li>
+                        <li>✓ Mobile responsive</li>
+                        <li>✗ Advanced analytics</li>
+                        <li>✗ Unlimited categories</li>
+                        <li>✗ Export data</li>
+                        <li>✗ Priority support</li>
+                    </ul>
+                    <button class="btn-secondary btn-block" onclick="window.location.href='signup.html'">Get Started</button>
+                </div>
+                <div class="pricing-card featured">
+                    <div class="popular-badge">Most Popular</div>
+                    <div class="pricing-header">
+                        <h3>Pro</h3>
+                        <div class="price">
+                            <span class="currency">₹</span>
+                            <span class="amount">299</span>
+                            <span class="period">/month</span>
+                        </div>
+                    </div>
+                    <ul class="pricing-features">
+                        <li>✓ Unlimited expense tracking</li>
+                        <li>✓ Unlimited budget categories</li>
+                        <li>✓ Advanced analytics & charts</li>
+                        <li>✓ Custom reports & export</li>
+                        <li>✓ Recurring transactions</li>
+                        <li>✓ Budget forecasting</li>
+                        <li>✓ Priority email support</li>
+                        <li>✓ No advertisements</li>
+                    </ul>
+                    <button class="btn-primary btn-block" onclick="window.location.href='signup.html'">Start Free Trial</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta">
+        <div class="container">
+            <div class="cta-content">
+                <h2>Ready to Take Control of Your Finances?</h2>
+                <p>Join thousands of users who are already managing their money smarter</p>
+                <button class="btn-primary btn-lg" onclick="window.location.href='signup.html'">
+                    Get Started for Free
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="logo">
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                            <rect width="32" height="32" rx="8" fill="url(#gradient2)"/>
+                            <path d="M16 8L22 14L16 20L10 14L16 8Z" fill="white"/>
+                            <defs>
+                                <linearGradient id="gradient2" x1="0" y1="0" x2="32" y2="32">
+                                    <stop offset="0%" stop-color="#3b82f6"/>
+                                    <stop offset="100%" stop-color="#1e40af"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <span>BudgetPro</span>
+                    </div>
+                    <p>Smart expense tracking and budget management for everyone.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <a href="#features">Features</a>
+                    <a href="#pricing">Pricing</a>
+                    <a href="#">FAQ</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <a href="#about">About</a>
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <a href="#">Help Center</a>
+                    <a href="#">Contact</a>
+                    <a href="#">Status</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 BudgetPro. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/landing.js"></script>
+</body>
+</html>

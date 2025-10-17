@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BudgetPro</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="dashboard-page">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <rect width="32" height="32" rx="8" fill="url(#gradient)"/>
+                    <path d="M16 8L22 14L16 20L10 14L16 8Z" fill="white"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                            <stop offset="0%" stop-color="#3b82f6"/>
+                            <stop offset="100%" stop-color="#1e40af"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>BudgetPro</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="3" y1="12" x2="21" y2="12"/>
+                    <line x1="3" y1="6" x2="21" y2="6"/>
+                    <line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-page="overview">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="14" y="14" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+                <span>Overview</span>
+            </a>
+            <a href="#" class="nav-item" data-page="transactions">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"/>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+                <span>Transactions</span>
+            </a>
+            <a href="#" class="nav-item" data-page="budgets">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M16 8l-8 8"/>
+                    <path d="M8 8h8v8"/>
+                </svg>
+                <span>Budgets</span>
+            </a>
+            <a href="#" class="nav-item" data-page="reports">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3v18h18"/>
+                    <path d="M18 17V9"/>
+                    <path d="M13 17V5"/>
+                    <path d="M8 17v-3"/>
+                </svg>
+                <span>Reports</span>
+            </a>
+            <a href="#" class="nav-item" data-page="categories">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/>
+                </svg>
+                <span>Categories</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="pro-badge" id="proUpgrade">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                </svg>
+                <div>
+                    <div class="pro-badge-title">Upgrade to Pro</div>
+                    <div class="pro-badge-subtitle">Unlock all features</div>
+                </div>
+            </div>
+            <a href="#" class="nav-item" id="settingsBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24"/>
+                </svg>
+                <span>Settings</span>
+            </a>
+            <a href="#" class="nav-item" id="logoutBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"/>
+                        <line x1="3" y1="6" x2="21" y2="6"/>
+                        <line x1="3" y1="18" x2="21" y2="18"/>
+                    </svg>
+                </button>
+                <h1 class="page-title">Dashboard Overview</h1>
+            </div>
+            <div class="topbar-right">
+                <button class="icon-btn" id="notificationBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="user-menu">
+                    <button class="user-avatar" id="userMenuBtn">
+                        <span id="userInitials">JD</span>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="dropdown-header">
+                            <div class="user-info">
+                                <div class="user-name" id="userName">John Doe</div>
+                                <div class="user-email" id="userEmail">john@example.com</div>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">Profile Settings</a>
+                        <a href="#" class="dropdown-item" id="upgradeProBtn">Upgrade to Pro</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item" id="logoutDropdown">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Content -->
+        <div class="dashboard-content" id="dashboardContent">
+            <!-- Overview Page -->
+            <div class="page-content active" data-page="overview">
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon blue">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"/>
+                                <line x1="1" y1="10" x2="23" y2="10"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Balance</div>
+                            <div class="stat-value" id="totalBalance">₹72000.00</div>
+                            <div class="stat-change positive">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="18 15 12 9 6 15"/>
+                                </svg>
+                                <span>+12.5%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon green">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v20M2 12h20"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Income (This Month)</div>
+                            <div class="stat-value" id="totalIncome">₹100000.00</div>
+                            <div class="stat-change positive">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="18 15 12 9 6 15"/>
+                                </svg>
+                                <span>+8.2%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon red">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Expenses (This Month)</div>
+                            <div class="stat-value" id="totalExpenses">₹28000.00</div>
+                            <div class="stat-change negative">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                <span>-3.1%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon purple">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M16 8l-8 8M8 8h8v8"/>
+                            </svg>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-label">Budget Remaining</div>
+                            <div class="stat-value" id="budgetRemaining">₹72000.00</div>
+                            <div class="stat-change neutral">
+                                <span>35% left</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-row">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Spending Trend</h3>
+                              <div class="time-period-filters">
+                                <button class="time-period-btn active" data-period="7days">Last 7 days</button>
+                                <button class="time-period-btn" data-period="30days">Last 30 days</button>
+                                <button class="time-period-btn" data-period="90days">Last 90 days</button>
+                                <button class="time-period-btn" data-period="1year">This year</button>
+                              </div>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="spendingChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Expense by Category</h3>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Transactions & Budget Overview -->
+                <div class="info-row">
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h3>Recent Transactions</h3>
+                            <button class="btn-text" onclick="navigateTo('transactions')">View All</button>
+                        </div>
+                        <div class="transactions-list" id="recentTransactions">
+                            <!-- Transactions will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <h3>Budget Overview</h3>
+                            <button class="btn-text" onclick="navigateTo('budgets')">View All</button>
+                        </div>
+                        <div class="budgets-list" id="budgetsList">
+                            <!-- Budgets will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="action-btn primary" id="addExpenseBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Expense
+                    </button>
+                    <button class="action-btn success" id="addIncomeBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Income
+                    </button>
+                </div>
+            </div>
+
+            <!-- Other pages will be loaded dynamically -->
+            <div class="page-content" data-page="transactions">
+                <div class="page-header">
+                    <h2>All Transactions</h2>
+                    <div class="page-actions">
+                        <button class="btn-secondary" id="filterBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                            </svg>
+                            Filter
+                        </button>
+                        <button class="btn-primary" id="addTransactionBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"/>
+                                <line x1="5" y1="12" x2="19" y2="12"/>
+                            </svg>
+                            Add Transaction
+                        </button>
+                    </div>
+                </div>
+                <div id="transactionsTable"></div>
+            </div>
+
+            <div class="page-content" data-page="budgets">
+                <div class="page-header">
+                    <h2>Budget Management</h2>
+                    <button class="btn-primary" id="addBudgetBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Budget
+                    </button>
+                </div>
+                <div id="budgetsGrid"></div>
+            </div>
+
+            <div class="page-content" data-page="reports">
+                <div class="page-header">
+                    <h2>Financial Reports</h2>
+                    <button class="btn-primary" id="exportReportBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        Export Report
+                    </button>
+                </div>
+                <div id="reportsContent"></div>
+            </div>
+
+            <div class="page-content" data-page="categories">
+                <div class="page-header">
+                    <h2>Manage Categories</h2>
+                    <button class="btn-primary" id="addCategoryBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"/>
+                            <line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Add Category
+                    </button>
+                </div>
+                <div id="categoriesGrid"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal" id="addTransactionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Transaction</h3>
+                <button class="modal-close" onclick="closeModal('addTransactionModal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <form id="transactionForm">
+                <div class="form-tabs">
+                    <button type="button" class="form-tab active" data-type="expense">Expense</button>
+                    <button type="button" class="form-tab" data-type="income">Income</button>
+                </div>
+                <div class="form-group">
+                    <label for="txAmount">Amount</label>
+                    <div class="input-group">
+                        <span class="input-prefix">₹</span>
+                        <input type="number" id="txAmount" step="0.01" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="txCategory">Category</label>
+                    <select id="txCategory" required>
+                        <option value="">Select category</option>
+                        <option value="Food & Dining">Food & Dining</option>
+                        <option value="Transportation">Transportation</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Bills & Utilities">Bills & Utilities</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="txDate">Date</label>
+                    <input type="date" id="txDate" required>
+                </div>
+                <div class="form-group">
+                    <label for="txDescription">Description</label>
+                    <textarea id="txDescription" rows="3" placeholder="Optional notes"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('addTransactionModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Transaction</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pro Upgrade Modal -->
+    <div class="modal" id="proModal">
+        <div class="modal-content pro-modal-content">
+            <div class="modal-header">
+                <h3>Upgrade to Pro</h3>
+                <button class="modal-close" onclick="closeModal('proModal')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="pro-features">
+                <div class="pro-price">
+                    <span class="currency">₹</span>
+                    <span class="amount">299</span>
+                    <span class="period">/month</span>
+                </div>
+                <ul class="features-list">
+                    <li>✓ Unlimited transactions & budgets</li>
+                    <li>✓ Advanced analytics & forecasting</li>
+                    <li>✓ Custom reports & export to PDF/Excel</li>
+                    <li>✓ Recurring transactions</li>
+                    <li>✓ Priority support</li>
+                    <li>✓ No advertisements</li>
+                </ul>
+                <button class="btn-primary btn-block">Upgrade Now</button>
+            </div>
+        </div>
+    </div>
+
+<!-- Add Budget Modal -->
+<div class="modal" id="addBudgetModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create Budget</h3>
+            <button class="modal-close" onclick="closeModal('addBudgetModal')">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+        </div>
+        <form id="budgetForm">
+            <div class="form-group">
+                <label for="budgetCategory">Category</label>
+                <select id="budgetCategory" required>
+                    <option value="">Select category</option>
+                    <option value="Food & Dining">Food & Dining</option>
+                    <option value="Transportation">Transportation</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Entertainment">Entertainment</option>
+                    <option value="Bills & Utilities">Bills & Utilities</option>
+                    <option value="Healthcare">Healthcare</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="budgetLimit">Monthly Budget Limit</label>
+                <div class="input-group">
+                    <span class="input-prefix">₹</span>
+                    <input type="number" id="budgetLimit" step="0.01" min="0" placeholder="0.00" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Color</label>
+                <div class="color-options" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-top: 0.5rem;">
+                    <label class="color-option">
+                        <input type="radio" name="budgetColor" value="#3b82f6" checked>
+                        <div class="color-circle" style="background: #3b82f6;"></div>
+                        <span class="color-label">Blue</span>
+                    </label>
+                    <label class="color-option">
+                        <input type="radio" name="budgetColor" value="#8b5cf6">
+                        <div class="color-circle" style="background: #8b5cf6;"></div>
+                        <span class="color-label">Purple</span>
+                    </label>
+                    <label class="color-option">
+                        <input type="radio" name="budgetColor" value="#ec4899">
+                        <div class="color-circle" style="background: #ec4899;"></div>
+                        <span class="color-label">Pink</span>
+                    </label>
+                    <label class="color-option">
+                        <input type="radio" name="budgetColor" value="#f59e0b">
+                        <div class="color-circle" style="background: #f59e0b;"></div>
+                        <span class="color-label">Amber</span>
+                    </label>
+                    <label class="color-option">
+                        <input type="radio" name="budgetColor" value="#10b981">
+                        <div class="color-circle" style="background: #10b981;"></div>
+                        <span class="color-label">Green</span>
+                    </label>
+                    <label class="color-option">
+                        <input type="radio" name="budgetColor" value="#ef4444">
+                        <div class="color-circle" style="background: #ef4444;"></div>
+                        <span class="color-label">Red</span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('addBudgetModal')">Cancel</button>
+                <button type="submit" class="btn-primary">Create Budget</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+    <div id="toast" class="toast"></div>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/charts.js"></script>
+</body>
+</html>
