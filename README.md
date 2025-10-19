@@ -90,21 +90,21 @@ Open http://localhost:3000 in your browser and ensure API URL in js/auth.js poin
 
 # Project Structure 🗂️
 budgetpro/
-├── ai analysis report pdf copy
+├── ai-analysis-report-pdf-copy/
 ├── backend/
-|   ├── node_modules/ 
-│   ├── server.js
-│   ├── package.json
-│   └── .env(add this on your own.. your jwt secret key goes here)
-|   └── .package-lock.json
+│ ├── node_modules/
+│ ├── server.js
+│ ├── package.json
+│ ├── package-lock.json
+│ └── .env (add your JWT secret key here)
 ├── frontend/
-│   ├── index.html
-│   ├── signup.html
-│   ├── signin.html
-│   ├── dashboard.html
-│   ├── css/
-│   └── js/
-├── screenshots/   # Demo screenshots for UI
+│ ├── index.html
+│ ├── signup.html
+│ ├── signin.html
+│ ├── dashboard.html
+│ ├── css/
+│ └── js/
+├── screenshots/
 ├── .gitignore
 ├── LICENSE
 └── README.md
