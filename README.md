@@ -76,11 +76,11 @@ npm start
 
 ```
 
-# Or for dev with auto-reload
+### Or for dev with auto-reload
 npm run dev
 Frontend Setup
 
-# Using VS Code Live Server, or
+### Using VS Code Live Server, or
 python -m http.server 3000
 npx http-server -p 3000
 Open http://localhost:3000 in your browser and ensure API URL in js/auth.js points to your backend.
