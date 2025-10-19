@@ -84,6 +84,13 @@ Open http://localhost:3000 in your browser and ensure API URL in js/auth.js poin
 
 # Project Structure 🗂️
 budgetpro/
+├── ai analysis report pdf copy
+├── backend/
+|   ├── node_modules/ 
+│   ├── server.js
+│   ├── package.json
+│   └── .env(add this on your own.. your jwt secret key goes here)
+|   └── .package-lock.json
 ├── frontend/
 │   ├── index.html
 │   ├── signup.html
@@ -91,11 +98,9 @@ budgetpro/
 │   ├── dashboard.html
 │   ├── css/
 │   └── js/
-├── backend/
-│   ├── server.js
-│   ├── package.json
-│   └── .env
 ├── screenshots/   # Demo screenshots for UI
+├── .gitignore
+├── LICENSE
 └── README.md
 
 ## Screenshots 📸
@@ -105,10 +110,11 @@ budgetpro/
 ![AI Analysis Part 1](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-1.png)
 ![AI Analysis Part 2](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-2.png)
 
-Future Enhancements ✨
-Direct email OTP delivery
+# Future Enhancements ✨
 
-Pro plan upgrade with Razorpay or QR UPI integration
+1. Direct email OTP delivery
 
-License 📝
+2. Pro plan upgrade with Razorpay or QR UPI integration
+
+# License 📝
 MIT License – free to use for personal or commercial purposes.
