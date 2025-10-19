@@ -100,7 +100,7 @@ Screenshots 📸
 ![Dashboard](screenshots/dashboard.png)
 ![Landing Page](screenshots/landing-page.png)
 ![Signup Page](screenshots/signup-page.png)
-
+![AI Analysis Part 1](screenshots/ai-analysis-1.png)
 
 Future Enhancements ✨
 Direct email OTP delivery
