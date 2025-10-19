@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const path = require('path'); // ADD THIS LINE
 require('dotenv').config();
 
 const app = express();
@@ -19,13 +18,10 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use(express.static(path.join(__dirname, 'Frontend')));
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'Frontend', 'index.html'));
-});
+// ✅ REMOVED duplicate route and static file serving
+// ✅ Only keep clean API routes
 
-
-// 👇 ADD THESE TEST ROUTES HERE 👇
+// Test routes
 app.get('/', (req, res) => {
     res.json({ 
         message: 'BudgetPro Backend is running!',
@@ -52,14 +48,10 @@ app.get('/api', (req, res) => {
         documentation: 'Check README.md for API details'
     });
 });
-// 👆 ADD THESE TEST ROUTES HERE 👆
 
-// MongoDB Connection
+// ✅ FIXED: MongoDB Connection - removed deprecated options
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/budgetpro';
-mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
+mongoose.connect(MONGODB_URI)
 .then(() => console.log('MongoDB Connected'))
 .catch(err => console.error('MongoDB Connection Error:', err));
 

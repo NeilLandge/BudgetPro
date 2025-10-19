@@ -15,9 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function setupTimePeriodFilters() {
     const periodButtons = document.querySelectorAll('.time-period-btn');
+    console.log('🎯 Setting up time period filters:', periodButtons.length);
     
     periodButtons.forEach(button => {
         button.addEventListener('click', function() {
+            console.log('🔄 Time period clicked:', this.dataset.period);
+            
             // Remove active class from all buttons
             periodButtons.forEach(btn => btn.classList.remove('active'));
             
@@ -26,6 +29,8 @@ function setupTimePeriodFilters() {
             
             // Update current time period
             currentTimePeriod = this.dataset.period;
+            
+            console.log('📅 Current time period updated to:', currentTimePeriod);
             
             // Refresh charts with new time period
             refreshChartsWithPeriod();
@@ -61,6 +66,9 @@ async function loadChartData() {
 
 function initCharts(transactions = []) {
     console.log('🎨 Initializing charts with', transactions.length, 'transactions');
+    
+    // Store transactions globally
+    allTransactions = transactions;
     
     // 🔥 ADDED: Handle empty data
     if (transactions.length === 0) {
@@ -113,7 +121,15 @@ function createSpendingChart(transactions) {
     
     // Filter transactions based on current time period
     const filteredTransactions = filterTransactionsByPeriod(transactions, currentTimePeriod);
+    console.log(`📈 Creating spending chart for ${currentTimePeriod}:`, {
+        totalTransactions: transactions.length,
+        filteredTransactions: filteredTransactions.length,
+        period: currentTimePeriod
+    });
+    
     const { labels, data } = getSpendingData(filteredTransactions, currentTimePeriod);
+    
+    console.log('📊 Chart data:', { labels, data });
     
     // 🔥 ADDED: Check if we have data to display
     if (data.every(value => value === 0)) {
@@ -225,6 +241,11 @@ function createCategoryChart(transactions) {
     const filteredTransactions = filterTransactionsByPeriod(transactions, currentTimePeriod);
     const categoryData = getCategorySpending(filteredTransactions);
     
+    console.log(`📊 Creating category chart for ${currentTimePeriod}:`, {
+        categories: categoryData.labels.length,
+        totalAmount: categoryData.data.reduce((a, b) => a + b, 0)
+    });
+    
     // 🔥 ADDED: Check if we have data to display
     if (categoryData.data.length === 0 || categoryData.data.every(value => value === 0)) {
         ctx.innerHTML = `
@@ -301,6 +322,8 @@ function filterTransactionsByPeriod(transactions, period) {
     const now = new Date();
     const startDate = new Date();
     
+    console.log(`🕒 Filtering transactions for period: ${period}`);
+    
     switch (period) {
         case '7days':
             startDate.setDate(now.getDate() - 7);
@@ -318,10 +341,18 @@ function filterTransactionsByPeriod(transactions, period) {
             startDate.setDate(now.getDate() - 7);
     }
     
-    return transactions.filter(transaction => {
+    const filtered = transactions.filter(transaction => {
         const transactionDate = new Date(transaction.date);
-        return transactionDate >= startDate && transactionDate <= now && transaction.type === 'expense';
+        const isInPeriod = transactionDate >= startDate && transactionDate <= now;
+        const isExpense = transaction.type === 'expense';
+        
+        return isInPeriod && isExpense;
     });
+    
+    console.log(`📅 Date range: ${startDate.toLocaleDateString()} to ${now.toLocaleDateString()}`);
+    console.log(`📊 Filtered ${filtered.length} expense transactions out of ${transactions.length} total`);
+    
+    return filtered;
 }
 
 // Get spending data for chart based on time period
@@ -347,6 +378,8 @@ function getSpendingData(transactions, period) {
         default:
             daysToShow = 7;
     }
+    
+    console.log(`📈 Generating ${daysToShow} days of spending data`);
     
     // Generate daily data
     for (let i = daysToShow - 1; i >= 0; i--) {
@@ -382,6 +415,8 @@ function getWeeklySpendingData(transactions, weeks = 12) {
     const labels = [];
     const data = [];
     
+    console.log(`📈 Generating ${weeks} weeks of spending data`);
+    
     for (let i = weeks - 1; i >= 0; i--) {
         const weekEnd = new Date();
         weekEnd.setDate(weekEnd.getDate() - (i * 7));
@@ -411,6 +446,8 @@ function getWeeklySpendingData(transactions, weeks = 12) {
 function getMonthlySpendingData(transactions, months = 12) {
     const labels = [];
     const data = [];
+    
+    console.log(`📈 Generating ${months} months of spending data`);
     
     for (let i = months - 1; i >= 0; i--) {
         const month = new Date();
@@ -455,15 +492,21 @@ function getCategorySpending(transactions) {
     const labels = Object.keys(categoryMap);
     const data = Object.values(categoryMap);
     
+    console.log(`📊 Category data: ${labels.length} categories, total ₹${data.reduce((a, b) => a + b, 0).toFixed(2)}`);
+    
     return { labels, data };
 }
 
 // Refresh charts with current time period
 function refreshChartsWithPeriod() {
+    console.log(`🔄 Refreshing charts for period: ${currentTimePeriod}`);
+    
     if (allTransactions.length > 0) {
+        console.log(`📊 Using ${allTransactions.length} transactions for refresh`);
         initCharts(allTransactions);
     } else {
-        console.log('🔄 No transactions available for chart refresh');
+        console.log('🔄 No transactions available for chart refresh, loading data...');
+        updateCharts();
     }
 }
 
@@ -489,29 +532,18 @@ async function updateCharts() {
     }
 }
 
-// 🔥 ADD THIS MISSING FUNCTION - it's being called by dashboard.js
-window.initializeCharts = function() {
-    console.log('🚀 Initializing charts via window.initializeCharts...');
-    
-    // Use global transactions data
-    if (window.transactions && Array.isArray(window.transactions) && window.transactions.length > 0) {
-        console.log('✅ Initializing charts with global transactions:', window.transactions.length);
-        allTransactions = window.transactions;
-        initCharts(window.transactions);
-    } else {
-        console.log('🔄 Global transactions not available, loading via API...');
-        updateCharts();
-    }
-};
-
 // ============================================
 // GLOBAL EXPORTS (MUST BE AT THE END)
 // ============================================
 
 // 🔥 THESE FUNCTIONS ARE CALLED BY dashboard.js - THEY MUST EXIST!
-window.refreshCharts = refreshCharts;
+window.refreshCharts = function() {
+    console.log('🔄 refreshCharts called from dashboard');
+    updateCharts();
+};
+
 window.initializeCharts = function() {
-    console.log('🚀 Initializing charts via window.initializeCharts...');
+    console.log('🚀 initializeCharts called from dashboard');
     
     // Use global transactions data
     if (window.transactions && Array.isArray(window.transactions) && window.transactions.length > 0) {
@@ -523,8 +555,20 @@ window.initializeCharts = function() {
         updateCharts();
     }
 };
+
 window.changeTimePeriod = function(period) {
+    console.log(`🔄 changeTimePeriod called with: ${period}`);
     currentTimePeriod = period;
+    
+    // Update active button
+    const periodButtons = document.querySelectorAll('.time-period-btn');
+    periodButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.period === period) {
+            btn.classList.add('active');
+        }
+    });
+    
     refreshChartsWithPeriod();
 };
 
@@ -539,15 +583,5 @@ function initializeChartsAfterDataLoad() {
     }, 300);
 }
 
-// Function to refresh charts (call this when new transactions are added)
-function refreshCharts() {
-    updateCharts();
-}
-
 // Export for use in other files
-window.refreshCharts = refreshCharts;
-window.initializeCharts = initializeChartsAfterDataLoad;
-window.changeTimePeriod = function(period) {
-    currentTimePeriod = period;
-    refreshChartsWithPeriod();
-};
+window.initializeChartsAfterDataLoad = initializeChartsAfterDataLoad;

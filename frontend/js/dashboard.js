@@ -3,6 +3,15 @@
 let currentUser = null;
 let transactions = [];
 let budgets = [];
+// Filter state
+let currentFilters = {
+    category: '',
+    type: '',
+    amountMin: null,
+    amountMax: null,
+    dateFrom: null,
+    dateTo: null
+};
 
 // Make data globally accessible
 window.transactions = transactions;
@@ -87,6 +96,11 @@ function setupEventListeners() {
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
         });
+    }
+
+    const filterBtn = document.getElementById('filterBtn');
+    if (filterBtn) {
+        filterBtn.addEventListener('click', () => openModal('filterModal'));
     }
     
     // Mobile Menu
@@ -1060,12 +1074,18 @@ async function loadDashboardData() {
             budgets: budgets.length
         });
 
-        // Initialize charts
+        // In loadDashboardData() function, replace the chart initialization with:
         setTimeout(() => {
-            if (typeof initCharts === 'function') {
-                initCharts(transactions);
+            console.log('🚀 Initializing charts with', transactions.length, 'transactions');
+            
+            if (typeof window.initializeCharts === 'function') {
+                window.initializeCharts();
+                console.log('✅ Charts initialized via initializeCharts()');
+            } else if (typeof window.initCharts === 'function') {
+                window.initCharts(transactions);
+                console.log('✅ Charts initialized via initCharts()');
             }
-        }, 500);
+        }, 300);
 
     } catch (error) {
         console.error('💥 Critical error loading data after reload:', error);
@@ -1140,23 +1160,205 @@ async function handleDeleteTransaction(transactionId) {
     }
 }
 
+// APPLY FILTERS FUNCTION
+function applyFilters() {
+    currentFilters = {
+        category: document.getElementById('filterCategory').value,
+        type: document.getElementById('filterType').value,
+        amountMin: parseFloat(document.getElementById('filterAmountMin').value) || null,
+        amountMax: parseFloat(document.getElementById('filterAmountMax').value) || null,
+        dateFrom: document.getElementById('filterDateFrom').value || null,
+        dateTo: document.getElementById('filterDateTo').value || null
+    };
+    
+    console.log('Applying filters:', currentFilters);
+    
+    closeModal('filterModal');
+    loadTransactionsPage();
+    
+    // Show filter indicator
+    const filterBtn = document.getElementById('filterBtn');
+    if (filterBtn && isFilterActive()) {
+        filterBtn.style.background = 'var(--primary-blue)';
+        filterBtn.style.color = 'white';
+        showToast('Filters applied successfully!', 'success');
+    }
+}
 
+// CLEAR FILTERS FUNCTION
+function clearFilters() {
+    currentFilters = {
+        category: '',
+        type: '',
+        amountMin: null,
+        amountMax: null,
+        dateFrom: null,
+        dateTo: null
+    };
+    
+    // Reset form
+    document.getElementById('filterCategory').value = '';
+    document.getElementById('filterType').value = '';
+    document.getElementById('filterAmountMin').value = '';
+    document.getElementById('filterAmountMax').value = '';
+    document.getElementById('filterDateFrom').value = '';
+    document.getElementById('filterDateTo').value = '';
+    
+    // Reset button style
+    const filterBtn = document.getElementById('filterBtn');
+    if (filterBtn) {
+        filterBtn.style.background = '';
+        filterBtn.style.color = '';
+    }
+    
+    closeModal('filterModal');
+    loadTransactionsPage();
+    showToast('Filters cleared', 'info');
+}
+
+// CHECK IF ANY FILTER IS ACTIVE
+function isFilterActive() {
+    return currentFilters.category || 
+           currentFilters.type || 
+           currentFilters.amountMin !== null || 
+           currentFilters.amountMax !== null ||
+           currentFilters.dateFrom || 
+           currentFilters.dateTo;
+}
+
+// GET FILTERED TRANSACTIONS
+function getFilteredTransactions() {
+    return transactions.filter(tx => {
+        // Category filter
+        if (currentFilters.category && tx.category !== currentFilters.category) {
+            return false;
+        }
+        
+        // Type filter
+        if (currentFilters.type && tx.type !== currentFilters.type) {
+            return false;
+        }
+        
+        // Amount filter
+        if (currentFilters.amountMin !== null && tx.amount < currentFilters.amountMin) {
+            return false;
+        }
+        if (currentFilters.amountMax !== null && tx.amount > currentFilters.amountMax) {
+            return false;
+        }
+        
+        // Date filter
+        if (currentFilters.dateFrom || currentFilters.dateTo) {
+            const txDate = new Date(tx.date);
+            
+            if (currentFilters.dateFrom) {
+                const fromDate = new Date(currentFilters.dateFrom);
+                if (txDate < fromDate) return false;
+            }
+            
+            if (currentFilters.dateTo) {
+                const toDate = new Date(currentFilters.dateTo);
+                toDate.setHours(23, 59, 59); // Include the entire day
+                if (txDate > toDate) return false;
+            }
+        }
+        
+        return true;
+    });
+}
+
+
+// ADD THIS FUNCTION - Delete Budget
+async function handleDeleteBudget(budgetId, budgetCategory) {
+    if (!confirm(`Are you sure you want to delete the budget for ${budgetCategory}?`)) {
+        return;
+    }
+
+    try {
+        const response = await apiRequest(`/budgets/${budgetId}`, 'DELETE');
+        
+        if (response.success) {
+            // Remove from local array
+            budgets = budgets.filter(b => {
+                const bId = b.id || b._id;
+                return bId != budgetId;
+            });
+            window.budgets = budgets;
+            
+            updateDashboard();
+            showToast('Budget deleted successfully!', 'success');
+            
+            // Refresh budgets page if active
+            if (document.querySelector('.page-content[data-page="budgets"]').classList.contains('active')) {
+                loadBudgetsPage();
+            }
+        }
+    } catch (error) {
+        console.error('Error deleting budget:', error);
+        
+        // For demo/offline mode
+        budgets = budgets.filter(b => {
+            const bId = b.id || b._id;
+            return bId != budgetId;
+        });
+        window.budgets = budgets;
+        updateDashboard();
+        showToast('Budget deleted successfully!', 'success');
+        
+        if (document.querySelector('.page-content[data-page="budgets"]').classList.contains('active')) {
+            loadBudgetsPage();
+        }
+    }
+}
+
+// Make it globally accessible
+window.handleDeleteBudget = handleDeleteBudget;
+
+// UPDATE loadTransactionsPage() to use filtered data
+// REPLACE the function with this updated version:
 function loadTransactionsPage() {
     const container = document.getElementById('transactionsTable');
     if (!container) return;
     
-    if (transactions.length === 0) {
+    // Use filtered transactions instead of all transactions
+    const displayTransactions = getFilteredTransactions();
+    
+    if (displayTransactions.length === 0) {
+        const message = isFilterActive() 
+            ? 'No transactions match your filters'
+            : 'No Transactions Yet';
+        const subMessage = isFilterActive()
+            ? 'Try adjusting your filter criteria'
+            : 'Start by adding your first transaction';
+            
         container.innerHTML = `
             <div class="card" style="text-align: center; padding: 3rem;">
-                <h3 style="margin-bottom: 1rem; color: var(--gray-400);">No Transactions Yet</h3>
-                <p style="color: var(--gray-500); margin-bottom: 2rem;">Start by adding your first transaction</p>
-                <button class="btn-primary" onclick="openTransactionModal('expense')">Add Transaction</button>
+                <h3 style="margin-bottom: 1rem; color: var(--gray-400);">${message}</h3>
+                <p style="color: var(--gray-500); margin-bottom: 2rem;">${subMessage}</p>
+                ${isFilterActive() 
+                    ? '<button class="btn-secondary" onclick="clearFilters()">Clear Filters</button>'
+                    : '<button class="btn-primary" onclick="openTransactionModal(\'expense\')">Add Transaction</button>'
+                }
             </div>
         `;
         return;
     }
     
-    container.innerHTML = `
+    // Show filter info if active
+    const filterInfo = isFilterActive() ? `
+        <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 3px solid var(--primary-blue);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--gray-300);">
+                    <strong>Filters Active:</strong> Showing ${displayTransactions.length} of ${transactions.length} transactions
+                </span>
+                <button class="btn-secondary" onclick="clearFilters()" style="padding: 0.5rem 1rem; font-size: 0.875rem;">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+    ` : '';
+    
+    container.innerHTML = filterInfo + `
         <div class="card">
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse;">
@@ -1171,8 +1373,7 @@ function loadTransactionsPage() {
                         </tr>
                     </thead>
                     <tbody>
-                        ${transactions.map(tx => {
-                            // Get the transaction ID properly
+                        ${displayTransactions.map(tx => {
                             const transactionId = tx.id || tx._id;
                             return `
                             <tr style="border-bottom: 1px solid var(--gray-800);">
@@ -1208,6 +1409,10 @@ function loadTransactionsPage() {
         </div>
     `;
 }
+
+window.applyFilters = applyFilters;
+window.clearFilters = clearFilters;
+window.getFilteredTransactions = getFilteredTransactions;
 
 function loadBudgetsPage() {
     const container = document.getElementById('budgetsGrid');
@@ -1251,7 +1456,19 @@ function loadBudgetsPage() {
                 }
                 
                 return `
-                    <div class="card" style="border: 2px solid ${cardBorder}; ${percentage >= 100 ? 'background: rgba(239, 68, 68, 0.03);' : ''}">
+                    <div class="card" style="border: 2px solid ${cardBorder}; ${percentage >= 100 ? 'background: rgba(239, 68, 68, 0.03);' : ''}; position: relative;">
+        <!-- Delete Button -->
+        <button onclick="handleDeleteBudget('${budget.id || budget._id}', '${budget.category}')" 
+                style="position: absolute; top: 1rem; right: 1rem; background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.5rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.borderColor='var(--red)';"
+                onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';"
+                title="Delete Budget">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </svg>
+        </button>
+        
+        <!-- Rest of your existing card content -->
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                             <div>
                                 <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--gray-100); margin-bottom: 0.5rem;">${budget.category}</h3>
@@ -1306,7 +1523,30 @@ function loadBudgetsPage() {
     `;
 }
 
-function loadReportsPage() {
+// 🔍 DEBUG FUNCTION - Add this to dashboard.js
+function debugAIData() {
+    console.log('🔍 DEBUG - Current transactions:', window.transactions);
+    console.log('🔍 DEBUG - Current budgets:', window.budgets);
+    console.log('🔍 DEBUG - Transactions count:', window.transactions?.length);
+    console.log('🔍 DEBUG - Budgets count:', window.budgets?.length);
+    
+    if (window.transactions && window.transactions.length > 0) {
+        console.log('🔍 DEBUG - First transaction:', window.transactions[0]);
+        console.log('🔍 DEBUG - Transaction types:', [...new Set(window.transactions.map(t => t.type))]);
+        console.log('🔍 DEBUG - Transaction categories:', [...new Set(window.transactions.map(t => t.category))]);
+        console.log('🔍 DEBUG - Transaction dates:', [...new Set(window.transactions.map(t => t.date))]);
+    }
+    
+    if (window.budgets && window.budgets.length > 0) {
+        console.log('🔍 DEBUG - First budget:', window.budgets[0]);
+    }
+    
+    // Test the AI data preparation
+    const testSummary = prepareFinancialSummary(window.transactions || [], window.budgets || []);
+    console.log('🔍 DEBUG - AI Data Summary:', testSummary);
+}
+
+async function loadReportsPage() {
     const container = document.getElementById('reportsContent');
     if (!container) return;
     
@@ -1320,14 +1560,79 @@ function loadReportsPage() {
         return;
     }
     
+    // Show loading state
+    container.innerHTML = `
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <div class="loading-spinner" style="margin: 0 auto 1rem; width: 48px; height: 48px; border: 4px solid var(--gray-800); border-top-color: var(--primary-blue); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <h3 style="color: var(--gray-300);">Generating AI-Powered Report...</h3>
+            <p style="color: var(--gray-500); margin-top: 0.5rem;">This may take 20-30 seconds</p>
+        </div>
+    `;
+    
+    try {
+        console.log('🚀 Starting AI report generation...');
+        
+        // ✅ INCREASE TIMEOUT to 30 seconds
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('AI report generation timeout')), 30000) // 30 seconds
+        );
+        
+        // Generate AI report with timeout
+        const reportPromise = generateAIReport(transactions, budgets);
+        const reportResult = await Promise.race([reportPromise, timeoutPromise]);
+        
+        if (reportResult.success) {
+            console.log('✅ AI report generated successfully');
+            const reportHTML = generateReportHTML(reportResult.data);
+            container.innerHTML = reportHTML;
+            
+            // Store report data for export
+            window.currentReportData = reportResult.data;
+        } else {
+            console.error('❌ AI report failed:', reportResult.error);
+            throw new Error(reportResult.error || 'Failed to generate AI report');
+        }
+        
+    } catch (error) {
+        console.error('💥 Error loading report:', error);
+        
+        // Show more specific error messages
+        let errorMessage = error.message;
+        if (errorMessage.includes('Invalid API key')) {
+            errorMessage = 'AI service configuration issue. Using basic reports.';
+        } else if (errorMessage.includes('rate limit')) {
+            errorMessage = 'AI service temporarily limited. Using basic reports.';
+        } else if (errorMessage.includes('timeout')) {
+            errorMessage = 'AI analysis taking too long. Using basic reports.';
+        }
+        
+        // Fallback to enhanced basic report
+        showEnhancedBasicReport(errorMessage);
+    }
+}
+
+// Enhanced basic report function
+function showEnhancedBasicReport(errorMessage = '') {
+    const container = document.getElementById('reportsContent');
     const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const totalExpenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     const netSavings = totalIncome - totalExpenses;
+    const savingsRate = totalIncome > 0 ? (netSavings / totalIncome) * 100 : 0;
+    
+    const expenseBreakdown = getExpenseBreakdown();
+    const topCategory = expenseBreakdown[0] || { category: 'None', amount: 0 };
     
     container.innerHTML = `
-        <div style="display: grid; gap: 1.5rem;">
+        ${errorMessage ? `
+        <div class="card" style="border-left: 3px solid var(--yellow); background: rgba(245, 158, 11, 0.05);">
+            <p style="color: var(--yellow); margin-bottom: 0.5rem;">⚠️ AI Insights Temporarily Unavailable</p>
+            <p style="color: var(--gray-500); font-size: 0.875rem; margin: 0;">${errorMessage}</p>
+        </div>
+        ` : ''}
+        
+        <div style="display: grid; gap: 1.5rem; margin-top: 1.5rem;">
             <div class="card">
-                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">Financial Summary</h3>
+                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;">📊 Financial Summary</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
                     <div>
                         <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 0.5rem;">Total Income</p>
@@ -1341,13 +1646,35 @@ function loadReportsPage() {
                         <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 0.5rem;">Net Savings</p>
                         <p style="font-size: 2rem; font-weight: 700; color: ${netSavings >= 0 ? 'var(--green)' : 'var(--red)'};">₹${netSavings.toFixed(2)}</p>
                     </div>
+                    <div>
+                        <p style="font-size: 0.875rem; color: var(--gray-500); margin-bottom: 0.5rem;">Savings Rate</p>
+                        <p style="font-size: 2rem; font-weight: 700; color: ${savingsRate >= 20 ? 'var(--green)' : savingsRate >= 10 ? 'var(--yellow)' : 'var(--red)'};">
+                            ${savingsRate.toFixed(1)}%
+                        </p>
+                    </div>
                 </div>
             </div>
             
             <div class="card">
-                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">Expense Breakdown</h3>
+                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">💡 Quick Insights</h3>
+                <div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <div style="padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+                        <p style="font-size: 0.875rem; color: var(--gray-400); margin-bottom: 0.5rem;">Largest Expense</p>
+                        <p style="font-size: 1.125rem; font-weight: 600; color: var(--gray-100);">${topCategory.category}</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; color: var(--red);">₹${topCategory.amount.toFixed(2)}</p>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(16, 185, 129, 0.1); border-radius: 8px;">
+                        <p style="font-size: 0.875rem; color: var(--gray-400); margin-bottom: 0.5rem;">Monthly Savings</p>
+                        <p style="font-size: 1.125rem; font-weight: 600; color: var(--gray-100);">${netSavings >= 0 ? 'Positive' : 'Negative'}</p>
+                        <p style="font-size: 1.5rem; font-weight: 700; color: ${netSavings >= 0 ? 'var(--green)' : 'var(--red)'};">₹${Math.abs(netSavings).toFixed(2)}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">📈 Expense Breakdown</h3>
                 <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    ${getExpenseBreakdown().map(item => `
+                    ${expenseBreakdown.map(item => `
                         <div>
                             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                                 <span style="color: var(--gray-300);">${item.category}</span>
@@ -1472,8 +1799,399 @@ function formatDate(dateString) {
     }
 }
 
-function handleExportReport() {
-    showToast('Export feature coming soon!', 'info');
+async function handleExportReport() {
+    try {
+        if (!window.currentReportData) {
+            showToast('No report data available. Please generate a report first.', 'error');
+            return;
+        }
+
+        showToast('Generating PDF report...', 'info');
+        
+        // Create PDF content
+        const pdfContent = createPDFContent(window.currentReportData);
+        
+        // Generate and download PDF
+        await generatePDF(pdfContent);
+        
+        showToast('PDF report downloaded successfully!', 'success');
+        
+    } catch (error) {
+        console.error('Error exporting report:', error);
+        showToast('Failed to export report. Please try again.', 'error');
+    }
+}
+
+function createPDFContent(reportData) {
+    const { summary, aiAnalysis, recommendations, insights } = reportData;
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const userName = user.name || 'User';
+    const userEmail = user.email || user.phone || 'N/A';
+    
+    // Clean and format the AI analysis for PDF
+    const cleanAnalysis = aiAnalysis
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **bold** to <strong>
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')            // Convert *italic* to <em>
+        .replace(/\$/g, '₹')                             // Replace $ with ₹
+        .split('\n\n')                                   // Split by paragraphs
+        .map(para => para.trim())
+        .filter(para => para.length > 0)
+        .map(para => `<p>${para}</p>`)
+        .join('');
+
+    // Clean insights for PDF
+    const cleanInsights = insights.map(insight => 
+        insight.replace(/\*\*(.*?)\*\*/g, '$1')
+              .replace(/\$(.*?)\s/g, '₹$1 ')
+    );
+
+    // Clean recommendations for PDF  
+    const cleanRecommendations = recommendations.map(rec => 
+        rec.replace(/\*\*(.*?)\*\*/g, '$1')
+          .replace(/\$(.*?)\s/g, '₹$1 ')
+    );
+
+    return `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <title>BudgetPro Financial Report - ${userName} ${summary.period.month} ${summary.period.year}</title>
+            <style>
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }
+                .header {
+                    text-align: center;
+                    border-bottom: 3px solid #3b82f6;
+                    padding-bottom: 20px;
+                    margin-bottom: 30px;
+                }
+                .header h1 {
+                    color: #3b82f6;
+                    margin: 0;
+                    font-size: 28px;
+                }
+                .header .subtitle {
+                    color: #6b7280;
+                    font-size: 16px;
+                    margin: 5px 0;
+                }
+                .section {
+                    margin-bottom: 30px;
+                    page-break-inside: avoid;
+                }
+                .section h2 {
+                    color: #1f2937;
+                    border-left: 4px solid #3b82f6;
+                    padding-left: 10px;
+                    margin: 20px 0 15px 0;
+                    font-size: 20px;
+                }
+                .overview-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 15px;
+                    margin: 15px 0;
+                }
+                .overview-item {
+                    background: #f8fafc;
+                    padding: 15px;
+                    border-radius: 8px;
+                    border-left: 4px solid #3b82f6;
+                }
+                .overview-label {
+                    font-size: 12px;
+                    color: #6b7280;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                    margin-bottom: 5px;
+                }
+                .overview-value {
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #1f2937;
+                }
+                .income { color: #10b981; }
+                .expense { color: #ef4444; }
+                .positive { color: #10b981; }
+                .negative { color: #ef4444; }
+                .insights-list, .recommendations-list {
+                    margin: 15px 0;
+                }
+                .insight-item, .recommendation-item {
+                    background: #f0f9ff;
+                    margin: 8px 0;
+                    padding: 12px;
+                    border-radius: 6px;
+                    border-left: 3px solid #3b82f6;
+                }
+                .recommendation-item {
+                    background: #f0fdf4;
+                    border-left-color: #10b981;
+                }
+                .category-breakdown {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                }
+                .category-breakdown th {
+                    background: #3b82f6;
+                    color: white;
+                    padding: 10px;
+                    text-align: left;
+                }
+                .category-breakdown td {
+                    padding: 10px;
+                    border-bottom: 1px solid #e5e7eb;
+                }
+                .trends-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 15px 0;
+                }
+                .trends-table th, .trends-table td {
+                    padding: 10px;
+                    text-align: center;
+                    border: 1px solid #e5e7eb;
+                }
+                .trends-table th {
+                    background: #f8fafc;
+                    font-weight: 600;
+                }
+                .analysis-text {
+                    background: #f8fafc;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 15px 0;
+                }
+                .analysis-text p {
+                    margin-bottom: 15px;
+                }
+                .analysis-text strong {
+                    color: #1f2937;
+                    font-weight: 700;
+                }
+                .footer {
+                    text-align: center;
+                    margin-top: 40px;
+                    padding-top: 20px;
+                    border-top: 2px solid #e5e7eb;
+                    color: #6b7280;
+                    font-size: 12px;
+                }
+                @media print {
+                    body { margin: 0; padding: 10px; }
+                    .section { page-break-inside: avoid; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>BudgetPro Financial Report</h1>
+                <div class="subtitle">${summary.period.month} ${summary.period.year}</div>
+                <div class="subtitle">Generated on: ${new Date().toLocaleDateString()}</div>
+            </div>
+
+            <!-- ADD USER INFORMATION SECTION -->
+            <div class="section">
+                <h2>👤 User Information</h2>
+                <div class="user-info">
+                    <div class="user-info-row">
+                        <span class="user-label">Name:</span>
+                        <span class="user-value">${userName}</span>
+                    </div>
+                    <div class="user-info-row">
+                        <span class="user-label">Contact:</span>
+                        <span class="user-value">${userEmail}</span>
+                    </div>
+                    <div class="user-info-row">
+                        <span class="user-label">Report Period:</span>
+                        <span class="user-value">${summary.period.month} ${summary.period.year}</span>
+                    </div>
+                    <div class="user-info-row">
+                        <span class="user-label">Total Transactions Analyzed:</span>
+                        <span class="user-value">${summary.transactionCount}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📊 Financial Overview</h2>
+                <div class="overview-grid">
+                    <div class="overview-item">
+                        <div class="overview-label">Total Income</div>
+                        <div class="overview-value income">₹${summary.overview.totalIncome.toFixed(2)}</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-label">Total Expenses</div>
+                        <div class="overview-value expense">₹${summary.overview.totalExpenses.toFixed(2)}</div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-label">Net Savings</div>
+                        <div class="overview-value ${summary.overview.netSavings >= 0 ? 'positive' : 'negative'}">
+                            ₹${summary.overview.netSavings.toFixed(2)}
+                        </div>
+                    </div>
+                    <div class="overview-item">
+                        <div class="overview-label">Savings Rate</div>
+                        <div class="overview-value">${summary.overview.savingsRate.toFixed(1)}%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📈 Expense Breakdown</h2>
+                <table class="category-breakdown">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Amount</th>
+                            <th>Percentage</th>
+                            <th>Transactions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Object.entries(summary.categoryBreakdown)
+                            .sort(([,a], [,b]) => b.amount - a.amount)
+                            .map(([category, data]) => `
+                                <tr>
+                                    <td>${category}</td>
+                                    <td>₹${data.amount.toFixed(2)}</td>
+                                    <td>${((data.amount / summary.overview.totalExpenses) * 100).toFixed(1)}%</td>
+                                    <td>${data.count}</td>
+                                </tr>
+                            `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>💰 Budget Performance</h2>
+                <table class="category-breakdown">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Spent</th>
+                            <th>Limit</th>
+                            <th>Used</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${summary.budgetAnalysis.map(budget => `
+                            <tr>
+                                <td>${budget.category}</td>
+                                <td>₹${budget.spent.toFixed(2)}</td>
+                                <td>₹${budget.limit.toFixed(2)}</td>
+                                <td>${budget.percentageUsed.toFixed(0)}%</td>
+                                <td>${budget.percentageUsed >= 100 ? '⚠️ EXCEEDED' : budget.percentageUsed >= 90 ? '⚠️ WARNING' : '✓ ON TRACK'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>📅 Spending Trends (Last 3 Months)</h2>
+                <table class="trends-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Income</th>
+                            <th>Expenses</th>
+                            <th>Savings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${summary.spendingTrends.map(trend => `
+                            <tr>
+                                <td>${trend.month}</td>
+                                <td class="income">₹${trend.income.toFixed(2)}</td>
+                                <td class="expense">₹${trend.expenses.toFixed(2)}</td>
+                                <td class="${trend.savings >= 0 ? 'positive' : 'negative'}">₹${trend.savings.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section">
+                <h2>💡 Key Insights</h2>
+                <div class="insights-list">
+                    ${cleanInsights.map(insight => `
+                        <div class="insight-item">
+                            ${insight}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎯 Recommendations</h2>
+                <div class="recommendations-list">
+                    ${cleanRecommendations.map((rec, index) => `
+                        <div class="recommendation-item">
+                            <strong>${index + 1}.</strong> ${rec}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>📝 AI Analysis</h2>
+                <div class="analysis-text">
+                    ${cleanAnalysis}
+                </div>
+            </div>
+
+            <div class="footer">
+                <p><strong>Confidential Report</strong> - Generated exclusively for ${userName}</p>
+                <p>This report was generated using AI-powered analysis by BudgetPro</p>
+                <p>For questions or support, please contact: support@budgetpro.com</p>
+            </div>
+        </body>
+        </html>
+    `;
+}
+
+async function generatePDF(htmlContent) {
+    // Use html2pdf library for PDF generation
+    if (typeof html2pdf === 'undefined') {
+        // Load html2pdf library if not already loaded
+        await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js');
+    }
+    
+    const element = document.createElement('div');
+    element.innerHTML = htmlContent;
+    document.body.appendChild(element);
+    
+    const opt = {
+        margin: 10,
+        filename: `BudgetPro_Report_${new Date().toISOString().split('T')[0]}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    await html2pdf().set(opt).from(element).save();
+    
+    document.body.removeChild(element);
+}
+
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
 }
 
 function handleLogout() {
@@ -1502,3 +2220,9 @@ window.showAddBudgetModal = showAddBudgetModal;
 // Add to the existing global functions at the bottom
 window.handleDeleteTransaction = handleDeleteTransaction;
 window.closeModal = closeModal;
+
+window.generateAIReport = generateAIReport;
+window.generateReportHTML = generateReportHTML;
+window.exportDetailedReport = exportDetailedReport;
+window.prepareFinancialSummary = prepareFinancialSummary;
+window.getExpenseBreakdown = getExpenseBreakdown;

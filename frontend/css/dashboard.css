@@ -999,6 +999,70 @@
     visibility: visible;
 }
 
+/* Filter Modal Specific Styles */
+#filterForm {
+    padding: 1.5rem;
+}
+
+#filterForm .form-group {
+    margin-bottom: 1.5rem;
+}
+
+#filterForm label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--gray-300);
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+#filterForm select,
+#filterForm input[type="number"],
+#filterForm input[type="date"] {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--gray-800);
+    border: 1px solid var(--gray-700);
+    border-radius: 8px;
+    color: var(--gray-100);
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+#filterForm select:focus,
+#filterForm input[type="number"]:focus,
+#filterForm input[type="date"]:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+#filterForm select option {
+    background: var(--gray-800);
+    color: var(--gray-100);
+}
+
+/* Date input calendar icon color fix */
+#filterForm input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* Amount range inputs */
+#filterForm input[type="number"]::placeholder {
+    color: var(--gray-500);
+}
+
+/* Filter Modal Footer */
+#filterForm .modal-footer {
+    padding: 1rem 0 0;
+    border-top: 1px solid var(--gray-800);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
 /* Toast Notification */
 .toast {
     position: fixed;
