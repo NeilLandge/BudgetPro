@@ -32,6 +32,7 @@ A beautiful web-based financial management app to track expenses, manage budgets
 ### Reports & Analytics 📄 
 - Currently available to all users, with plans in future to make it completely Pro exclusive 
 - Financial summaries and expense breakdowns with complete and detailed AI analysis according to the user's spending pattern,
+
   **unique to each user**
 - Export functionality in **.pdf** format available with proper structuring and clean look
 
