@@ -30,8 +30,8 @@ A beautiful web-based financial management app to track expenses, manage budgets
 - Add custom categories with icons and colors
 
 ### Reports & Analytics 📄
-- Financial summaries and expense breakdowns  
-- Export functionality ready (PDF/Excel in future for Pro users)  
+- Financial summaries and expense breakdowns with complete and detailed AI analysis according to the user's spending pattern(unique to each user)
+- Export functionality in.pdf format available with proper structuring and clean look(PDF/Excel in future for Pro users)  
 
 ### Pro Features(Coming Soon!) ⭐
 - Unlimited transactions  
@@ -96,18 +96,17 @@ budgetpro/
 ├── screenshots/   # Demo screenshots for UI
 └── README.md
 
-Screenshots 📸
-![Dashboard](screenshots/dashboard.png)
-![Landing Page](screenshots/landing-page.png)
-![Signup Page](screenshots/signup-page.png)
-![AI Analysis Part 1](screenshots/ai-analysis-1.png)
+## Screenshots 📸
+![Dashboard](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/dashboard.png)
+![Landing Page](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/landing-page.png)
+![Signup Page](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/signup-page.png)
+![AI Analysis Part 1](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-1.png)
+![AI Analysis Part 2](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-2.png)
 
 Future Enhancements ✨
 Direct email OTP delivery
 
 Pro plan upgrade with Razorpay or QR UPI integration
-
-Advanced PDF/Excel export reports with AI insights
 
 License 📝
 MIT License – free to use for personal or commercial purposes.
