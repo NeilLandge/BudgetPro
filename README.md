@@ -90,7 +90,6 @@ npx http-server -p 3000
 Open http://localhost:3000 in your browser and ensure API URL in js/auth.js points to your backend.
 
 ## Project Structure 🗂️
-
 budgetpro/
 ├── ai-analysis-report-pdf-copy/
 ├── backend/
