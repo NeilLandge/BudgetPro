@@ -7,7 +7,6 @@
 [![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
-[![Perplexity AI](https://img.shields.io/badge/Perplexity_AI-4B0082?style=for-the-badge&logo=perplexity&logoColor=white)](https://www.perplexity.ai/)
 
 **BudgetPro** is an **AI-powered financial management platform** that helps users track expenses, manage budgets, and gain **personalized insights** into their spending habits.  
 With intelligent analytics and automated reports, it transforms your financial data into actionable insights — helping you make smarter budgeting decisions effortlessly.
