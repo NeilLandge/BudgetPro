@@ -71,7 +71,9 @@ Start MongoDB and the server:
 mongod
 npm start
 
-# or for dev with auto-reload
+```
+
+# Or for dev with auto-reload
 npm run dev
 Frontend Setup
 
@@ -80,7 +82,7 @@ python -m http.server 3000
 npx http-server -p 3000
 Open http://localhost:3000 in your browser and ensure API URL in js/auth.js points to your backend.
 
-Project Structure 🗂️
+# Project Structure 🗂️
 budgetpro/
 ├── frontend/
 │   ├── index.html
