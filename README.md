@@ -76,19 +76,21 @@ npm start
 
 ```
 
-### Or for dev with auto-reload
+Or for dev with auto-reload
 ```bash
 npm run dev
 ```
 
-### Using VS Code Live Server, or
+### Frontend Setup
+Using VS Code Live Server, or
 ```bash
 python -m http.server 3000
 npx http-server -p 3000
 ```
 Open http://localhost:3000 in your browser and ensure API URL in js/auth.js points to your backend.
 
-# Project Structure 🗂️
+## Project Structure 🗂️
+
 budgetpro/
 ├── ai-analysis-report-pdf-copy/
 ├── backend/
@@ -116,11 +118,11 @@ budgetpro/
 ![AI Analysis Part 1](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-1.png)
 ![AI Analysis Part 2](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-2.png)
 
-# Future Enhancements ✨
+## Future Enhancements ✨
 
 1. Direct email OTP delivery
 
 2. Pro plan upgrade with Razorpay or QR UPI integration
 
-# License 📝
+## License 📝
 MIT License – free to use for personal or commercial purposes.
