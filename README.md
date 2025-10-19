@@ -1,4 +1,4 @@
-# BudgetPro 💰📊
+# BudgetPro 💰📊 — AI-Powered Personal Finance Manager
 
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
@@ -8,7 +8,8 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
 [![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 
-A beautiful web-based financial management app to track expenses, manage budgets, and gain insights into your spending habits.
+**BudgetPro** is an **AI-powered financial management platform** that helps users track expenses, manage budgets, and gain **personalized insights** into their spending habits.  
+With intelligent analytics and automated reports, it transforms your financial data into actionable insights — helping you make smarter budgeting decisions effortlessly.
 
 ---
 
