@@ -797,6 +797,89 @@ app.post('/api/user/upgrade-pro', authenticateToken, async (req, res) => {
     }
 });
 
+// ============================================
+// AI REPORT ROUTE - ADD THIS TO YOUR SERVER.JS
+// ============================================
+const fetch = require('node-fetch');
+
+app.post('/api/generate-report', authenticateToken, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+
+        console.log('🔍 AI Report Request Received:', {
+            userId: req.user.userId,
+            promptLength: prompt?.length
+        });
+
+        if (!prompt) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Prompt is required' 
+            });
+        }
+
+        // Check if API key exists
+        if (!process.env.PERPLEXITY_API_KEY) {
+            console.error('❌ Perplexity API key missing');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'AI service not configured' 
+            });
+        }
+
+        console.log('🤖 Calling Perplexity API...');
+        
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'sonar',
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: 'You are a professional financial advisor providing personalized financial insights and recommendations. Be specific, practical, and encouraging in your advice.' 
+                    },
+                    { 
+                        role: 'user', 
+                        content: prompt 
+                    }
+                ],
+                max_tokens: 2000,
+                temperature: 0.2
+            })
+        });
+
+        console.log('📨 Perplexity API response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Perplexity API error:', errorText);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'AI service temporarily unavailable' 
+            });
+        }
+
+        const data = await response.json();
+        console.log('✅ Perplexity API success');
+
+        res.json({ 
+            success: true, 
+            data: data 
+        });
+
+    } catch (error) {
+        console.error('❌ AI report generation error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Internal server error: ' + error.message 
+        });
+    }
+});
+
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
