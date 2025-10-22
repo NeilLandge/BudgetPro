@@ -1,14 +1,15 @@
-# BudgetPro 💰📊
+# BudgetPro 💰📊 — AI-Powered Personal Finance Manager
 
-[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)  
-[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)  
-[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)  
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)  
-[![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)  
-[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)  
-[![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)  
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)](https://www.mongodb.com/)
+[![Chart.js](https://img.shields.io/badge/Chart.js-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 
-A beautiful web-based financial management app to track expenses, manage budgets, and gain insights into your spending habits.
+**BudgetPro** is an **AI-powered financial management platform** that helps users track expenses, manage budgets, and gain **personalized insights** into their spending habits.  
+With intelligent analytics and automated reports, it transforms your financial data into actionable insights — helping you make smarter budgeting decisions effortlessly.
 
 ---
 
@@ -29,13 +30,16 @@ A beautiful web-based financial management app to track expenses, manage budgets
 - Visual progress bars and alerts for overspending  
 - Add custom categories with icons and colors
 
-### Reports & Analytics 📄
-- Financial summaries and expense breakdowns  
-- Export functionality ready (PDF/Excel in future for Pro users)  
+### Reports & Analytics 📄 
+- Currently available to all users, with plans in future to make it completely Pro exclusive 
+- Financial summaries and expense breakdowns with complete and detailed AI analysis according to the user's spending pattern.
+
+  **Note: This is completely unique to each user**
+- Export functionality in **.pdf** format available with proper structuring and clean look
 
 ### Pro Features(Coming Soon!) ⭐
 - Unlimited transactions  
-- Advanced analytics & AI insights (future)  
+- Advanced analytics & AI insights 
 - Priority support  
 
 ---
@@ -71,43 +75,56 @@ Start MongoDB and the server:
 mongod
 npm start
 
-# or for dev with auto-reload
-npm run dev
-Frontend Setup
+```
 
-# Using VS Code Live Server, or
+Or for dev with auto-reload
+```bash
+npm run dev
+```
+
+### Frontend Setup
+Using VS Code Live Server, or
+```bash
 python -m http.server 3000
 npx http-server -p 3000
+```
 Open http://localhost:3000 in your browser and ensure API URL in js/auth.js points to your backend.
 
-Project Structure 🗂️
+## Project Structure 🗂️
+```
 budgetpro/
-├── frontend/
-│   ├── index.html
-│   ├── signup.html
-│   ├── signin.html
-│   ├── dashboard.html
-│   ├── css/
-│   └── js/
+├── ai-analysis-report-pdf-copy/
 ├── backend/
-│   ├── server.js
-│   ├── package.json
-│   └── .env
-├── screenshots/   # Demo screenshots for UI
+│ ├── node_modules/
+│ ├── server.js
+│ ├── package.json
+│ ├── package-lock.json
+│ └── .env (add your JWT secret key here)
+├── frontend/
+│ ├── index.html
+│ ├── signup.html
+│ ├── signin.html
+│ ├── dashboard.html
+│ ├── css/
+│ └── js/
+├── screenshots/
+├── .gitignore
+├── LICENSE
 └── README.md
+```
 
-Screenshots 📸
-![Dashboard](screenshots/dashboard.png)
-![Landing Page](screenshots/landing-page.png)
-![Signup Page](screenshots/signup-page.png)
+## Screenshots 📸
+![Dashboard](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/dashboard.png)
+![Landing Page](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/landing-page.png)
+![Signup Page](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/signup-page.png)
+![AI Analysis Part 1](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-1.png)
+![AI Analysis Part 2](https://raw.githubusercontent.com/NeilLandge/BudgetPro/main/screenshots/ai-analysis-2.png)
 
+## Future Enhancements ✨
 
-Future Enhancements ✨
-Direct email OTP delivery
+1. Direct email OTP delivery
 
-Pro plan upgrade with Razorpay or QR UPI integration
+2. Pro plan upgrade with Razorpay or QR UPI integration
 
-Advanced PDF/Excel export reports with AI insights
-
-License 📝
+## License 📝
 MIT License – free to use for personal or commercial purposes.
