@@ -56,10 +56,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.success) {
                     pendingSignUpData = signUpData;
                     
-                    // Show OTP modal
+                    // ✅ SHOW OTP TO USER (for testing)
                     const message = emailMethod 
-                        ? `Enter the verification code sent to ${signUpData.email}`
-                        : `Enter the verification code sent to ${signUpData.phone}`;
+                        ? `Enter verification code: ${response.otp} (sent to ${signUpData.email})`
+                        : `Enter verification code: ${response.otp} (sent to ${signUpData.phone})`;
                     
                     showOTPModal(message);
                     showToast('Verification code sent!', 'success');
@@ -120,12 +120,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (response.success) {
                     showToast('Verification code resent!', 'success');
                     
+                    // ✅ UPDATE MESSAGE WITH NEW OTP
+                    const message = pendingSignUpData.email 
+                        ? `Enter verification code: ${response.otp} (sent to ${pendingSignUpData.email})`
+                        : `Enter verification code: ${response.otp} (sent to ${pendingSignUpData.phone})`;
+                    
+                    document.getElementById('otpMessage').textContent = message;
+                    
                     // Clear OTP inputs
                     document.querySelectorAll('.otp-input').forEach(input => {
                         input.value = '';
                     });
                     document.querySelector('.otp-input').focus();
-                }
+            }
             } catch (error) {
                 showToast(error.message || 'Failed to resend code', 'error');
             } finally {

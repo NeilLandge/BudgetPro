@@ -139,17 +139,16 @@ function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// ============================================
+// AUTH ROUTES
+// ============================================
+
 // Helper function to send OTP (Mock implementation)
 async function sendOTP(contact, otp, method) {
     console.log(`Sending OTP ${otp} to ${contact} via ${method}`);
     // In production, integrate with SMS/Email service like Twilio, SendGrid, etc.
     return true;
 }
-
-// ============================================
-// AUTH ROUTES
-// ============================================
-
 // Sign Up
 app.post('/api/auth/signup', async (req, res) => {
     try {
@@ -212,7 +211,8 @@ app.post('/api/auth/signup', async (req, res) => {
         res.json({ 
             success: true, 
             message: 'OTP sent successfully',
-            userId: user._id
+            userId: user._id,
+            otp: otp
         });
     } catch (error) {
         console.error('Sign up error:', error);
@@ -301,7 +301,11 @@ app.post('/api/auth/resend-otp', async (req, res) => {
         const contact = method === 'email' ? email : phone;
         await sendOTP(contact, otp, method);
         
-        res.json({ success: true, message: 'OTP resent successfully' });
+        res.json({ 
+            success: true, 
+            message: 'OTP resent successfully',
+            otp: otp
+        });
     } catch (error) {
         console.error('Resend OTP error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
