@@ -240,7 +240,7 @@ async function callBackendAIAPI(prompt) {
         }
 
         // ✅ CHANGE THIS LINE - Use absolute URL with port 5000
-        const response = await fetch('http://localhost:5000/api/generate-report', {
+        const response = await fetch('https://budgetpro-backend-1nyw.onrender.com/api/generate-report', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',

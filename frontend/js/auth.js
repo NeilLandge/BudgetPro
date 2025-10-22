@@ -1,5 +1,5 @@
 // Authentication Common Functions
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'https://budgetpro-backend-1nyw.onrender.com/api';
 
 // Show Toast Notification
 function showToast(message, type = 'success') {

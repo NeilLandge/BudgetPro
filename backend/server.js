@@ -10,7 +10,13 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:5000'],
+    origin: [
+        'http://127.0.0.1:5500', 
+        'http://localhost:5500', 
+        'http://localhost:5000',
+        'https://budget-2g5g8rq0f-neil-landges-projects.vercel.app',
+        /\.vercel\.app$/  // Allow any Vercel deployment
+    ],
     credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
