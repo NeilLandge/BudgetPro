@@ -1,14 +1,10 @@
-// Sign Up Page JavaScript
+// Sign Up Page JavaScript - Direct registration
 
 document.addEventListener('DOMContentLoaded', function() {
     redirectIfAuthenticated();
     
     const signUpForm = document.getElementById('signUpForm');
     const passwordInput = document.getElementById('password');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const resendOtpBtn = document.getElementById('resendOtpBtn');
-    
-    let pendingSignUpData = null;
     
     // Password Strength Checker
     if (passwordInput) {
@@ -54,45 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const response = await apiRequest('/auth/signup', 'POST', signUpData);
                 
                 if (response.success) {
-                    pendingSignUpData = signUpData;
-                    
-                    // ✅ SHOW OTP TO USER (for testing)
-                    const message = emailMethod 
-                        ? `Enter verification code: ${response.otp} (sent to ${signUpData.email})`
-                        : `Enter verification code: ${response.otp} (sent to ${signUpData.phone})`;
-                    
-                    showOTPModal(message);
-                    showToast('Verification code sent!', 'success');
-                }
-            } catch (error) {
-                showToast(error.message || 'Sign up failed', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            }
-        });
-    }
-    
-    // Handle OTP Verification
-    if (verifyOtpBtn) {
-        verifyOtpBtn.addEventListener('click', async function() {
-            const otp = getOTPValue();
-            
-            if (otp.length !== 6) {
-                showToast('Please enter complete OTP', 'error');
-                return;
-            }
-            
-            this.disabled = true;
-            this.textContent = 'Verifying...';
-            
-            try {
-                const response = await apiRequest('/auth/verify-otp', 'POST', {
-                    ...pendingSignUpData,
-                    otp
-                });
-                
-                if (response.success) {
+                    // ✅ Direct login after signup
                     saveUserSession(response.token, response.user);
                     showToast('Account created successfully!', 'success');
                     
@@ -101,43 +59,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1000);
                 }
             } catch (error) {
-                showToast(error.message || 'Verification failed', 'error');
-                this.disabled = false;
-                this.textContent = 'Verify';
-            }
-        });
-    }
-    
-    // Handle Resend OTP
-    if (resendOtpBtn) {
-        resendOtpBtn.addEventListener('click', async function() {
-            this.disabled = true;
-            this.textContent = 'Sending...';
-            
-            try {
-                const response = await apiRequest('/auth/resend-otp', 'POST', pendingSignUpData);
-                
-                if (response.success) {
-                    showToast('Verification code resent!', 'success');
-                    
-                    // ✅ UPDATE MESSAGE WITH NEW OTP
-                    const message = pendingSignUpData.email 
-                        ? `Enter verification code: ${response.otp} (sent to ${pendingSignUpData.email})`
-                        : `Enter verification code: ${response.otp} (sent to ${pendingSignUpData.phone})`;
-                    
-                    document.getElementById('otpMessage').textContent = message;
-                    
-                    // Clear OTP inputs
-                    document.querySelectorAll('.otp-input').forEach(input => {
-                        input.value = '';
-                    });
-                    document.querySelector('.otp-input').focus();
-            }
-            } catch (error) {
-                showToast(error.message || 'Failed to resend code', 'error');
+                showToast(error.message || 'Sign up failed', 'error');
             } finally {
-                this.disabled = false;
-                this.textContent = 'Resend Code';
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     }

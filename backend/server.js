@@ -64,7 +64,7 @@ mongoose.connect(MONGODB_URI)
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// User Schema
+// User Schema - Remove OTP fields
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, unique: true, sparse: true },
@@ -72,9 +72,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     isPro: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    otpCode: String,
-    otpExpiry: Date,
-    isVerified: { type: Boolean, default: false }
+    isVerified: { type: Boolean, default: true } // ✅ All users are verified
 });
 
 const User = mongoose.model('User', userSchema);
@@ -149,7 +147,7 @@ async function sendOTP(contact, otp, method) {
     // In production, integrate with SMS/Email service like Twilio, SendGrid, etc.
     return true;
 }
-// Sign Up
+// Sign Up - Direct registration without OTP
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { name, email, phone, password, method } = req.body;
@@ -182,17 +180,11 @@ app.post('/api/auth/signup', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        
-        // Create user
+        // Create user (auto-verified)
         const userData = {
             name,
             password: hashedPassword,
-            otpCode: otp,
-            otpExpiry,
-            isVerified: false
+            isVerified: true  // ✅ Auto-verify users
         };
         
         if (method === 'email') {
@@ -204,15 +196,24 @@ app.post('/api/auth/signup', async (req, res) => {
         const user = new User(userData);
         await user.save();
         
-        // Send OTP
-        const contact = method === 'email' ? email : phone;
-        await sendOTP(contact, otp, method);
+        // Generate JWT immediately
+        const token = jwt.sign(
+            { userId: user._id, email: user.email, phone: user.phone },
+            JWT_SECRET,
+            { expiresIn: '30d' }
+        );
         
         res.json({ 
             success: true, 
-            message: 'OTP sent successfully',
-            userId: user._id,
-            otp: otp
+            message: 'Account created successfully!',
+            token,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                isPro: user.isPro
+            }
         });
     } catch (error) {
         console.error('Sign up error:', error);
