@@ -24,9 +24,6 @@ app.use(cors({
 
 app.use(express.json());
 
-// ✅ REMOVED duplicate route and static file serving
-// ✅ Only keep clean API routes
-
 // Test routes
 app.get('/', (req, res) => {
     res.json({ 
@@ -42,9 +39,7 @@ app.get('/api', (req, res) => {
         endpoints: {
             auth: {
                 signup: 'POST /api/auth/signup',
-                verifyOtp: 'POST /api/auth/verify-otp',
-                signin: 'POST /api/auth/signin',
-                sendOtp: 'POST /api/auth/send-otp'
+                signin: 'POST /api/auth/signin'
             },
             transactions: 'GET/POST/PUT/DELETE /api/transactions',
             budgets: 'GET/POST/PUT/DELETE /api/budgets',
@@ -55,7 +50,7 @@ app.get('/api', (req, res) => {
     });
 });
 
-// ✅ FIXED: MongoDB Connection - removed deprecated options
+// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/budgetpro';
 mongoose.connect(MONGODB_URI)
 .then(() => console.log('MongoDB Connected'))
@@ -64,7 +59,7 @@ mongoose.connect(MONGODB_URI)
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-// User Schema - Remove OTP fields
+// User Schema
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, unique: true, sparse: true },
@@ -72,7 +67,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     isPro: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    isVerified: { type: Boolean, default: true } // ✅ All users are verified
+    isVerified: { type: Boolean, default: true }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -132,21 +127,10 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Helper function to generate OTP
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
 // ============================================
 // AUTH ROUTES
 // ============================================
 
-// Helper function to send OTP (Mock implementation)
-async function sendOTP(contact, otp, method) {
-    console.log(`Sending OTP ${otp} to ${contact} via ${method}`);
-    // In production, integrate with SMS/Email service like Twilio, SendGrid, etc.
-    return true;
-}
 // Sign Up - Direct registration without OTP
 app.post('/api/auth/signup', async (req, res) => {
     try {
@@ -184,7 +168,7 @@ app.post('/api/auth/signup', async (req, res) => {
         const userData = {
             name,
             password: hashedPassword,
-            isVerified: true  // ✅ Auto-verify users
+            isVerified: true
         };
         
         if (method === 'email') {
@@ -221,98 +205,6 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 });
 
-// Verify OTP
-app.post('/api/auth/verify-otp', async (req, res) => {
-    try {
-        const { email, phone, otp, method } = req.body;
-        
-        // Find user
-        const user = method === 'email'
-            ? await User.findOne({ email })
-            : await User.findOne({ phone });
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Check OTP
-        if (user.otpCode !== otp) {
-            return res.status(400).json({ success: false, message: 'Invalid OTP' });
-        }
-        
-        // Check OTP expiry
-        if (new Date() > user.otpExpiry) {
-            return res.status(400).json({ success: false, message: 'OTP expired' });
-        }
-        
-        // Verify user
-        user.isVerified = true;
-        user.otpCode = undefined;
-        user.otpExpiry = undefined;
-        await user.save();
-        
-        // Generate JWT
-        const token = jwt.sign(
-            { userId: user._id, email: user.email, phone: user.phone },
-            JWT_SECRET,
-            { expiresIn: '30d' }
-        );
-        
-        res.json({
-            success: true,
-            message: 'Account verified successfully',
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                isPro: user.isPro
-            }
-        });
-    } catch (error) {
-        console.error('Verify OTP error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Resend OTP
-app.post('/api/auth/resend-otp', async (req, res) => {
-    try {
-        const { email, phone, method } = req.body;
-        
-        // Find user
-        const user = method === 'email'
-            ? await User.findOne({ email })
-            : await User.findOne({ phone });
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Generate new OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        user.otpCode = otp;
-        user.otpExpiry = otpExpiry;
-        await user.save();
-        
-        // Send OTP
-        const contact = method === 'email' ? email : phone;
-        await sendOTP(contact, otp, method);
-        
-        res.json({ 
-            success: true, 
-            message: 'OTP resent successfully',
-            otp: otp
-        });
-    } catch (error) {
-        console.error('Resend OTP error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
 // Sign In
 app.post('/api/auth/signin', async (req, res) => {
     try {
@@ -325,11 +217,6 @@ app.post('/api/auth/signin', async (req, res) => {
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Check if user is verified
-        if (!user.isVerified) {
-            return res.status(403).json({ success: false, message: 'Please verify your account first' });
         }
         
         // Verify password
@@ -359,83 +246,6 @@ app.post('/api/auth/signin', async (req, res) => {
         });
     } catch (error) {
         console.error('Sign in error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Send OTP for phone sign in
-app.post('/api/auth/send-otp', async (req, res) => {
-    try {
-        const { phone } = req.body;
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        user.otpCode = otp;
-        user.otpExpiry = otpExpiry;
-        await user.save();
-        
-        // Send OTP
-        await sendOTP(phone, otp, 'phone');
-        
-        res.json({ success: true, message: 'OTP sent successfully' });
-    } catch (error) {
-        console.error('Send OTP error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Verify OTP for phone sign in
-app.post('/api/auth/verify-signin-otp', async (req, res) => {
-    try {
-        const { phone, otp } = req.body;
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Check OTP
-        if (user.otpCode !== otp) {
-            return res.status(400).json({ success: false, message: 'Invalid OTP' });
-        }
-        
-        if (new Date() > user.otpExpiry) {
-            return res.status(400).json({ success: false, message: 'OTP expired' });
-        }
-        
-        // Clear OTP
-        user.otpCode = undefined;
-        user.otpExpiry = undefined;
-        await user.save();
-        
-        // Generate JWT
-        const token = jwt.sign(
-            { userId: user._id, email: user.email, phone: user.phone },
-            JWT_SECRET,
-            { expiresIn: '30d' }
-        );
-        
-        res.json({
-            success: true,
-            message: 'Sign in successful',
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone,
-                isPro: user.isPro
-            }
-        });
-    } catch (error) {
-        console.error('Verify signin OTP error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -743,7 +553,7 @@ app.post('/api/categories', authenticateToken, async (req, res) => {
 // Get user profile
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
-        const user = await User.findById(req.user.userId).select('-password -otpCode -otpExpiry');
+        const user = await User.findById(req.user.userId).select('-password');
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -809,7 +619,7 @@ app.post('/api/user/upgrade-pro', authenticateToken, async (req, res) => {
 });
 
 // ============================================
-// AI REPORT ROUTE - ADD THIS TO YOUR SERVER.JS
+// AI REPORT ROUTE
 // ============================================
 const fetch = require('node-fetch');
 
@@ -829,7 +639,6 @@ app.post('/api/generate-report', authenticateToken, async (req, res) => {
             });
         }
 
-        // Check if API key exists
         if (!process.env.PERPLEXITY_API_KEY) {
             console.error('❌ Perplexity API key missing');
             return res.status(500).json({ 

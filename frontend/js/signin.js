@@ -4,10 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     redirectIfAuthenticated();
     
     const signInForm = document.getElementById('signInForm');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const resendOtpBtn = document.getElementById('resendOtpBtn');
-    
-    let pendingSignInData = null;
     
     // Forgot Password Functionality
     const forgotPasswordLink = document.querySelector('.forgot-link');
@@ -38,58 +34,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (emailMethod) {
                     signInData.email = document.getElementById('email').value.trim();
                     signInData.password = document.getElementById('password').value;
-                    
-                    // Direct email sign in
-                    const response = await apiRequest('/auth/signin', 'POST', signInData);
-                    
-                    if (response.success) {
-                        saveUserSession(response.token, response.user);
-                        showToast('Sign in successful!', 'success');
-                        
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 1000);
-                    }
                 } else {
                     signInData.phone = document.getElementById('phone').value.trim();
-                    pendingSignInData = signInData;
-                    
-                    // Send OTP for phone sign in
-                    const response = await apiRequest('/auth/send-otp', 'POST', signInData);
-                    
-                    if (response.success) {
-                        const message = `Enter the verification code sent to ${signInData.phone}`;
-                        showOTPModal(message);
-                        showToast('Verification code sent!', 'success');
-                    }
+                    signInData.password = document.getElementById('password').value;
                 }
-            } catch (error) {
-                showToast(error.message || 'Sign in failed', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            }
-        });
-    }
-    
-    // Handle OTP Verification for Phone Sign In
-    if (verifyOtpBtn) {
-        verifyOtpBtn.addEventListener('click', async function() {
-            const otp = getOTPValue();
-            
-            if (otp.length !== 6) {
-                showToast('Please enter complete OTP', 'error');
-                return;
-            }
-            
-            this.disabled = true;
-            this.textContent = 'Verifying...';
-            
-            try {
-                const response = await apiRequest('/auth/verify-signin-otp', 'POST', {
-                    ...pendingSignInData,
-                    otp
-                });
+                
+                // Direct sign in for both email and phone
+                const response = await apiRequest('/auth/signin', 'POST', signInData);
                 
                 if (response.success) {
                     saveUserSession(response.token, response.user);
@@ -100,36 +51,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1000);
                 }
             } catch (error) {
-                showToast(error.message || 'Verification failed', 'error');
-                this.disabled = false;
-                this.textContent = 'Verify';
-            }
-        });
-    }
-    
-    // Handle Resend OTP
-    if (resendOtpBtn) {
-        resendOtpBtn.addEventListener('click', async function() {
-            this.disabled = true;
-            this.textContent = 'Sending...';
-            
-            try {
-                const response = await apiRequest('/auth/send-otp', 'POST', pendingSignInData);
-                
-                if (response.success) {
-                    showToast('Verification code resent!', 'success');
-                    
-                    // Clear OTP inputs
-                    document.querySelectorAll('.otp-input').forEach(input => {
-                        input.value = '';
-                    });
-                    document.querySelector('.otp-input').focus();
-                }
-            } catch (error) {
-                showToast(error.message || 'Failed to resend code', 'error');
+                showToast(error.message || 'Sign in failed', 'error');
             } finally {
-                this.disabled = false;
-                this.textContent = 'Resend Code';
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     }
