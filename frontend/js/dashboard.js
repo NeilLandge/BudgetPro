@@ -971,7 +971,7 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
         throw new Error('Authentication required');
     }
     
-    const baseURL = 'http://localhost:5000';
+    const baseURL = 'https://budgetpro-backend-1nyw.onrender.com';
     const url = `${baseURL}/api${endpoint}`;
     
     console.log(`🌐 Making request to: ${url}`);

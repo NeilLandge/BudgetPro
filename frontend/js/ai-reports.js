@@ -1,8 +1,9 @@
-// AI Reports using Perplexity API
-const PERPLEXITY_API_KEY = 'Replace with your actual API key'; 
-const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
+// // AI Reports using Perplexity API
+// const PERPLEXITY_API_KEY = 'backend/dotenv/PERPLEXITY_API_KEY'; 
+// const PERPLEXITY_API_URL = 'https://api.perplexity.ai/chat/completions';
 
 // Generate AI-powered financial analysis
+// Generate AI-powered financial analysis - UPDATED
 async function generateAIReport(transactions, budgets) {
     try {
         // Prepare financial data summary
@@ -11,8 +12,8 @@ async function generateAIReport(transactions, budgets) {
         // Create prompt for AI
         const prompt = createReportPrompt(financialSummary);
         
-        // Call Perplexity API
-        const analysis = await callPerplexityAPI(prompt);
+        // Call BACKEND API instead of Perplexity directly
+        const analysis = await callBackendAIAPI(prompt);
         
         return {
             success: true,
@@ -228,84 +229,65 @@ Be specific, practical, and encouraging in your advice.`;
 }
 
 // Call Perplexity API with correct model name
-async function callPerplexityAPI(prompt) {
+// CALL BACKEND API INSTEAD OF PERPLEXITY DIRECTLY
+async function callBackendAIAPI(prompt) {
     try {
-        console.log('🔍 Making Perplexity API request...');
+        console.log('📡 Calling backend AI API...');
         
-        const requestBody = {
-            model: 'sonar', // ✅ CORRECTED: Use 'sonar' instead of 'llama-3.1-sonar-small-128k-online'
-            messages: [
-                {
-                    role: 'system',
-                    content: 'You are a professional financial advisor providing personalized financial insights and recommendations. Be specific, practical, and encouraging in your advice.'
-                },
-                {
-                    role: 'user',
-                    content: prompt
-                }
-            ],
-            temperature: 0.2,
-            top_p: 0.9,
-            max_tokens: 2000
-        };
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('No authentication token found');
+        }
 
-        console.log('📤 API Request Details:', {
-            url: PERPLEXITY_API_URL,
-            apiKeyLength: PERPLEXITY_API_KEY ? PERPLEXITY_API_KEY.length : 0,
-            promptLength: prompt.length,
-            model: requestBody.model
-        });
-
-        const response = await fetch(PERPLEXITY_API_URL, {
+        // ✅ CHANGE THIS LINE - Use absolute URL with port 5000
+        const response = await fetch('https://budgetpro-backend-1nyw.onrender.com/api/generate-report', {
             method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${PERPLEXITY_API_KEY}`,
-                'Content-Type': 'application/json'
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({ prompt })
         });
 
-        console.log('📥 API Response Status:', response.status, response.statusText);
+        console.log('📨 Backend response status:', response.status);
 
         if (!response.ok) {
-            let errorDetails = `Status: ${response.status} ${response.statusText}`;
-            
-            // Try to get more error details from response body
-            try {
-                const errorBody = await response.text();
-                console.error('❌ API Error Response Body:', errorBody);
-                errorDetails += ` - ${errorBody}`;
-            } catch (e) {
-                console.error('❌ Could not read error response body:', e);
-            }
-            
-            throw new Error(`API request failed: ${errorDetails}`);
+            const errorText = await response.text();
+            console.error('❌ Backend error response:', errorText);
+            throw new Error(`Backend API failed: ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('✅ API Success - Response received:', data);
-        
-        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-            throw new Error('Invalid API response format');
+        console.log('✅ Backend API success:', { 
+            success: data.success,
+            hasData: !!data.data 
+        });
+
+        if (!data.success) {
+            throw new Error(data.message || 'Backend request failed');
         }
-        
-        return data.choices[0].message.content;
-        
+
+        // Handle the response from backend (which contains Perplexity API response)
+        if (data.data && data.data.choices && data.data.choices[0] && data.data.choices[0].message) {
+            return data.data.choices[0].message.content;
+        } else {
+            console.warn('⚠️ Unexpected response format:', data.data);
+            throw new Error('Invalid response format from AI service');
+        }
+
     } catch (error) {
-        console.error('💥 Perplexity API error:', error);
+        console.error('❌ Backend AI API error:', error);
         
         // More specific error messages
-        if (error.message.includes('401')) {
-            throw new Error('Invalid API key. Please check your Perplexity API key.');
-        } else if (error.message.includes('429')) {
-            throw new Error('API rate limit exceeded. Please try again later.');
-        } else if (error.message.includes('402')) {
-            throw new Error('Payment required. Please check your Perplexity account balance.');
-        } else if (error.message.includes('Failed to fetch')) {
-            throw new Error('Network error. Please check your internet connection.');
+        if (error.message.includes('Failed to fetch')) {
+            throw new Error('Cannot connect to server. Please make sure the backend is running on port 5000.');
+        } else if (error.message.includes('401')) {
+            throw new Error('Authentication failed. Please sign in again.');
+        } else if (error.message.includes('500')) {
+            throw new Error('AI service temporarily unavailable. Please try again later.');
         }
         
-        throw error;
+        throw new Error(`AI service error: ${error.message}`);
     }
 }
 
