@@ -10,16 +10,19 @@ const app = express();
 
 // Middleware
 app.use(cors({
-    origin: ['http://127.0.0.1:5500', 'http://localhost:5500', 'http://localhost:5000'],
+    origin: [
+        'http://127.0.0.1:5500', 
+        'http://localhost:5500', 
+        'http://localhost:5000',
+        'https://budget-2g5g8rq0f-neil-landges-projects.vercel.app',
+        /\.vercel\.app$/  // Allow any Vercel deployment
+    ],
     credentials: false,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
-
-// ✅ REMOVED duplicate route and static file serving
-// ✅ Only keep clean API routes
 
 // Test routes
 app.get('/', (req, res) => {
@@ -36,9 +39,7 @@ app.get('/api', (req, res) => {
         endpoints: {
             auth: {
                 signup: 'POST /api/auth/signup',
-                verifyOtp: 'POST /api/auth/verify-otp',
-                signin: 'POST /api/auth/signin',
-                sendOtp: 'POST /api/auth/send-otp'
+                signin: 'POST /api/auth/signin'
             },
             transactions: 'GET/POST/PUT/DELETE /api/transactions',
             budgets: 'GET/POST/PUT/DELETE /api/budgets',
@@ -49,7 +50,7 @@ app.get('/api', (req, res) => {
     });
 });
 
-// ✅ FIXED: MongoDB Connection - removed deprecated options
+// MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/budgetpro';
 mongoose.connect(MONGODB_URI)
 .then(() => console.log('MongoDB Connected'))
@@ -66,9 +67,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     isPro: { type: Boolean, default: false },
     createdAt: { type: Date, default: Date.now },
-    otpCode: String,
-    otpExpiry: Date,
-    isVerified: { type: Boolean, default: false }
+    isVerified: { type: Boolean, default: true }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -128,23 +127,11 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Helper function to generate OTP
-function generateOTP() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-// Helper function to send OTP (Mock implementation)
-async function sendOTP(contact, otp, method) {
-    console.log(`Sending OTP ${otp} to ${contact} via ${method}`);
-    // In production, integrate with SMS/Email service like Twilio, SendGrid, etc.
-    return true;
-}
-
 // ============================================
 // AUTH ROUTES
 // ============================================
 
-// Sign Up
+// Sign Up - Direct registration without OTP
 app.post('/api/auth/signup', async (req, res) => {
     try {
         const { name, email, phone, password, method } = req.body;
@@ -177,17 +164,11 @@ app.post('/api/auth/signup', async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-        
-        // Create user
+        // Create user (auto-verified)
         const userData = {
             name,
             password: hashedPassword,
-            otpCode: otp,
-            otpExpiry,
-            isVerified: false
+            isVerified: true
         };
         
         if (method === 'email') {
@@ -199,61 +180,16 @@ app.post('/api/auth/signup', async (req, res) => {
         const user = new User(userData);
         await user.save();
         
-        // Send OTP
-        const contact = method === 'email' ? email : phone;
-        await sendOTP(contact, otp, method);
-        
-        res.json({ 
-            success: true, 
-            message: 'OTP sent successfully',
-            userId: user._id
-        });
-    } catch (error) {
-        console.error('Sign up error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Verify OTP
-app.post('/api/auth/verify-otp', async (req, res) => {
-    try {
-        const { email, phone, otp, method } = req.body;
-        
-        // Find user
-        const user = method === 'email'
-            ? await User.findOne({ email })
-            : await User.findOne({ phone });
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Check OTP
-        if (user.otpCode !== otp) {
-            return res.status(400).json({ success: false, message: 'Invalid OTP' });
-        }
-        
-        // Check OTP expiry
-        if (new Date() > user.otpExpiry) {
-            return res.status(400).json({ success: false, message: 'OTP expired' });
-        }
-        
-        // Verify user
-        user.isVerified = true;
-        user.otpCode = undefined;
-        user.otpExpiry = undefined;
-        await user.save();
-        
-        // Generate JWT
+        // Generate JWT immediately
         const token = jwt.sign(
             { userId: user._id, email: user.email, phone: user.phone },
             JWT_SECRET,
             { expiresIn: '30d' }
         );
         
-        res.json({
-            success: true,
-            message: 'Account verified successfully',
+        res.json({ 
+            success: true, 
+            message: 'Account created successfully!',
             token,
             user: {
                 id: user._id,
@@ -264,40 +200,7 @@ app.post('/api/auth/verify-otp', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Verify OTP error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
-
-// Resend OTP
-app.post('/api/auth/resend-otp', async (req, res) => {
-    try {
-        const { email, phone, method } = req.body;
-        
-        // Find user
-        const user = method === 'email'
-            ? await User.findOne({ email })
-            : await User.findOne({ phone });
-        
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Generate new OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        user.otpCode = otp;
-        user.otpExpiry = otpExpiry;
-        await user.save();
-        
-        // Send OTP
-        const contact = method === 'email' ? email : phone;
-        await sendOTP(contact, otp, method);
-        
-        res.json({ success: true, message: 'OTP resent successfully' });
-    } catch (error) {
-        console.error('Resend OTP error:', error);
+        console.error('Sign up error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -314,11 +217,6 @@ app.post('/api/auth/signin', async (req, res) => {
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Check if user is verified
-        if (!user.isVerified) {
-            return res.status(403).json({ success: false, message: 'Please verify your account first' });
         }
         
         // Verify password
@@ -352,79 +250,61 @@ app.post('/api/auth/signin', async (req, res) => {
     }
 });
 
-// Send OTP for phone sign in
-app.post('/api/auth/send-otp', async (req, res) => {
-    try {
-        const { phone } = req.body;
-        
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        
-        // Generate OTP
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-        
-        user.otpCode = otp;
-        user.otpExpiry = otpExpiry;
-        await user.save();
-        
-        // Send OTP
-        await sendOTP(phone, otp, 'phone');
-        
-        res.json({ success: true, message: 'OTP sent successfully' });
-    } catch (error) {
-        console.error('Send OTP error:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
-    }
-});
+// Add this to your server.js in the auth routes section:
 
-// Verify OTP for phone sign in
-app.post('/api/auth/verify-signin-otp', async (req, res) => {
+// Direct Sign Up (No OTP)
+app.post('/api/auth/signup-direct', async (req, res) => {
     try {
-        const { phone, otp } = req.body;
+        const { name, email, password } = req.body;
         
-        const user = await User.findOne({ phone });
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
+        // Validate input
+        if (!name || !email || !password) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
         }
         
-        // Check OTP
-        if (user.otpCode !== otp) {
-            return res.status(400).json({ success: false, message: 'Invalid OTP' });
+        // Check if user already exists
+        const existingUser = await User.findOne({ email });
+        
+        if (existingUser) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'User with this email already exists' 
+            });
         }
         
-        if (new Date() > user.otpExpiry) {
-            return res.status(400).json({ success: false, message: 'OTP expired' });
-        }
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Clear OTP
-        user.otpCode = undefined;
-        user.otpExpiry = undefined;
+        // Create user (auto-verified since no OTP)
+        const user = new User({
+            name,
+            email,
+            password: hashedPassword,
+            isVerified: true // Auto-verify since no OTP
+        });
+        
         await user.save();
         
         // Generate JWT
         const token = jwt.sign(
-            { userId: user._id, email: user.email, phone: user.phone },
+            { userId: user._id, email: user.email },
             JWT_SECRET,
             { expiresIn: '30d' }
         );
         
         res.json({
             success: true,
-            message: 'Sign in successful',
+            message: 'Account created successfully',
             token,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                phone: user.phone,
                 isPro: user.isPro
             }
         });
     } catch (error) {
-        console.error('Verify signin OTP error:', error);
+        console.error('Direct sign up error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
     }
 });
@@ -732,7 +612,7 @@ app.post('/api/categories', authenticateToken, async (req, res) => {
 // Get user profile
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
-        const user = await User.findById(req.user.userId).select('-password -otpCode -otpExpiry');
+        const user = await User.findById(req.user.userId).select('-password');
         
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -794,6 +674,88 @@ app.post('/api/user/upgrade-pro', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Upgrade to Pro error:', error);
         res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// ============================================
+// AI REPORT ROUTE
+// ============================================
+const fetch = require('node-fetch');
+
+app.post('/api/generate-report', authenticateToken, async (req, res) => {
+    try {
+        const { prompt } = req.body;
+
+        console.log('🔍 AI Report Request Received:', {
+            userId: req.user.userId,
+            promptLength: prompt?.length
+        });
+
+        if (!prompt) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Prompt is required' 
+            });
+        }
+
+        if (!process.env.PERPLEXITY_API_KEY) {
+            console.error('❌ Perplexity API key missing');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'AI service not configured' 
+            });
+        }
+
+        console.log('🤖 Calling Perplexity API...');
+        
+        const response = await fetch('https://api.perplexity.ai/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.PERPLEXITY_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: 'sonar',
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: 'You are a professional financial advisor providing personalized financial insights and recommendations. Be specific, practical, and encouraging in your advice.' 
+                    },
+                    { 
+                        role: 'user', 
+                        content: prompt 
+                    }
+                ],
+                max_tokens: 2000,
+                temperature: 0.2
+            })
+        });
+
+        console.log('📨 Perplexity API response status:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Perplexity API error:', errorText);
+            return res.status(500).json({ 
+                success: false, 
+                message: 'AI service temporarily unavailable' 
+            });
+        }
+
+        const data = await response.json();
+        console.log('✅ Perplexity API success');
+
+        res.json({ 
+            success: true, 
+            data: data 
+        });
+
+    } catch (error) {
+        console.error('❌ AI report generation error:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Internal server error: ' + error.message 
+        });
     }
 });
 

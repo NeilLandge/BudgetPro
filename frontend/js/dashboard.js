@@ -373,8 +373,13 @@ async function loadDashboardData() {
 }
 
 // FIXED FUNCTION: Update spending for all budgets based on transactions
+// FIXED FUNCTION: Update spending for all budgets based on CURRENT MONTH transactions only
 function updateAllBudgetsSpending() {
-    console.log('Updating all budgets spending...');
+    console.log('Updating all budgets spending for current month...');
+    
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
     
     // Create a mapping for similar category names
     const categoryMapping = {
@@ -388,10 +393,19 @@ function updateAllBudgetsSpending() {
         // Reset spent amount to 0
         budget.spent = 0;
         
-        // Calculate total expenses for this budget's category (with mapping)
+        // Calculate total expenses for this budget's category for CURRENT MONTH only
         const categoryExpenses = transactions
             .filter(tx => {
                 if (tx.type !== 'expense') return false;
+                
+                // Check if transaction is from CURRENT MONTH
+                const txDate = new Date(tx.date);
+                const txMonth = txDate.getMonth();
+                const txYear = txDate.getFullYear();
+                
+                if (txMonth !== currentMonth || txYear !== currentYear) {
+                    return false; // Skip transactions from other months
+                }
                 
                 // Direct match
                 if (tx.category === budget.category) return true;
@@ -404,12 +418,13 @@ function updateAllBudgetsSpending() {
         
         budget.spent = categoryExpenses;
         
-        console.log(`Budget "${budget.category}": ₹${budget.spent} spent out of ₹${budget.limit}`);
+        console.log(`Budget "${budget.category}" (${now.toLocaleString('default', { month: 'long' })} ${currentYear}): ₹${budget.spent} spent out of ₹${budget.limit}`);
     });
     
     // Update the global reference
     window.budgets = budgets;
 }
+
 function updateDashboard() {
     // CRITICAL: Always update budget spending before displaying
     updateAllBudgetsSpending();
@@ -596,8 +611,12 @@ function canAddExpense(expenseAmount = 0) {
     return currentBalance >= 0;
 }
 
-// FIXED: Use the budget.spent value that's already calculated
+// FIXED: Check budget limit for CURRENT MONTH only
 function checkBudgetLimit(category, expenseAmount) {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
     // Category mapping for matching
     const categoryMapping = {
         'Food & Dining': 'Food & Dining',
@@ -611,7 +630,7 @@ function checkBudgetLimit(category, expenseAmount) {
     const budget = budgets.find(b => b.category === budgetCategory);
     if (!budget) return { allowed: true, message: '', remaining: 0 }; // No budget set
     
-    // Use the budget.spent value that's already calculated in updateAllBudgetsSpending()
+    // Use the budget.spent value that's already calculated for CURRENT MONTH
     const currentSpent = budget.spent || 0;
     const totalAfterExpense = currentSpent + expenseAmount;
     const wouldExceed = totalAfterExpense > budget.limit;
@@ -619,9 +638,10 @@ function checkBudgetLimit(category, expenseAmount) {
     return {
         allowed: !wouldExceed,
         message: wouldExceed 
-            ? `This expense would exceed your ${budgetCategory} budget limit of ₹${budget.limit.toFixed(2)}. Current spent: ₹${currentSpent.toFixed(2)}`
+            ? `This expense would exceed your ${budgetCategory} budget limit of ₹${budget.limit.toFixed(2)} for ${now.toLocaleString('default', { month: 'long' })}. Current spent: ₹${currentSpent.toFixed(2)}`
             : '',
-        remaining: budget.limit - currentSpent
+        remaining: budget.limit - currentSpent,
+        currentMonth: now.toLocaleString('default', { month: 'long', year: 'numeric' })
     };
 }
 
@@ -637,6 +657,9 @@ function updateBudgetsList() {
         `;
         return;
     }
+    
+    const now = new Date();
+    const currentMonth = now.toLocaleString('default', { month: 'long', year: 'numeric' });
     
     container.innerHTML = budgets.map(budget => {
         const percentage = (budget.spent / budget.limit) * 100;
@@ -666,6 +689,9 @@ function updateBudgetsList() {
                 <div class="budget-header">
                     <div class="budget-category">
                         ${budget.category}
+                        <div style="font-size: 0.75rem; color: var(--gray-500); margin-top: 0.25rem;">
+                            ${currentMonth} Budget
+                        </div>
                         ${statusText ? `<span style="margin-left: 0.5rem; font-size: 0.75rem; color: ${status === 'danger' ? 'var(--red)' : 'var(--yellow)'};">${statusText}</span>` : ''}
                     </div>
                     <div class="budget-amounts" style="color: ${remaining < 0 ? 'var(--red)' : 'var(--gray-100)'};">
@@ -770,15 +796,28 @@ async function handleAddBudget(e) {
         return;
     }
     
-    // VALIDATION 2: Calculate existing expenses for this category
+    // VALIDATION 2: Calculate existing expenses for this category for CURRENT MONTH only
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
     const existingExpenses = transactions
-        .filter(tx => tx.type === 'expense' && tx.category === category)
+        .filter(tx => {
+            if (tx.type !== 'expense' || tx.category !== category) return false;
+            
+            // Only count transactions from CURRENT MONTH
+            const txDate = new Date(tx.date);
+            const txMonth = txDate.getMonth();
+            const txYear = txDate.getFullYear();
+            
+            return txMonth === currentMonth && txYear === currentYear;
+        })
         .reduce((total, tx) => total + tx.amount, 0);
     
-    // STRICT VALIDATION 3: Don't allow budget creation if already exceeded
+    // STRICT VALIDATION 3: Don't allow budget creation if already exceeded for current month
     if (existingExpenses > limit) {
         showToast(
-            `Cannot create budget: You've already spent ₹${existingExpenses.toFixed(2)} in ${category}, which exceeds the limit of ₹${limit.toFixed(2)}. Please set a higher limit.`,
+            `Cannot create budget: You've already spent ₹${existingExpenses.toFixed(2)} in ${category} for ${now.toLocaleString('default', { month: 'long' })}, which exceeds the limit of ₹${limit.toFixed(2)}. Please set a higher limit.`,
             'error'
         );
         return;
@@ -787,7 +826,7 @@ async function handleAddBudget(e) {
     // WARNING: If very close to limit (90%+)
     if (existingExpenses > limit * 0.9) {
         const confirmed = confirm(
-            `Warning: You've already spent ₹${existingExpenses.toFixed(2)} (${((existingExpenses/limit)*100).toFixed(0)}% of budget).\n\nAre you sure you want to create this budget?`
+            `Warning: You've already spent ₹${existingExpenses.toFixed(2)} (${((existingExpenses/limit)*100).toFixed(0)}% of budget) for ${now.toLocaleString('default', { month: 'long' })}.\n\nAre you sure you want to create this budget?`
         );
         if (!confirmed) {
             return;
@@ -798,7 +837,9 @@ async function handleAddBudget(e) {
         category,
         limit,
         color,
-        spent: existingExpenses // Set current spending
+        spent: existingExpenses, // Set current spending for this month
+        month: currentMonth,
+        year: currentYear
     };
     
     try {
@@ -810,7 +851,7 @@ async function handleAddBudget(e) {
             updateAllBudgetsSpending();
             updateDashboard();
             closeModal('addBudgetModal');
-            showToast('Budget created successfully!', 'success');
+            showToast(`Budget created successfully for ${now.toLocaleString('default', { month: 'long' })}!`, 'success');
             loadBudgetsPage();
         } else {
             // Handle backend validation error
@@ -830,7 +871,7 @@ async function handleAddBudget(e) {
         updateAllBudgetsSpending();
         updateDashboard();
         closeModal('addBudgetModal');
-        showToast('Budget created successfully!', 'success');
+        showToast(`Budget created successfully for ${now.toLocaleString('default', { month: 'long' })}!`, 'success');
         loadBudgetsPage();
     }
 }
@@ -1269,8 +1310,12 @@ function getFilteredTransactions() {
 
 
 // ADD THIS FUNCTION - Delete Budget
+// UPDATED FUNCTION - Delete Budget with month info
 async function handleDeleteBudget(budgetId, budgetCategory) {
-    if (!confirm(`Are you sure you want to delete the budget for ${budgetCategory}?`)) {
+    const now = new Date();
+    const currentMonth = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    
+    if (!confirm(`Are you sure you want to delete the ${budgetCategory} budget for ${currentMonth}?`)) {
         return;
     }
 
@@ -1286,7 +1331,7 @@ async function handleDeleteBudget(budgetId, budgetCategory) {
             window.budgets = budgets;
             
             updateDashboard();
-            showToast('Budget deleted successfully!', 'success');
+            showToast(`${budgetCategory} budget for ${currentMonth} deleted successfully!`, 'success');
             
             // Refresh budgets page if active
             if (document.querySelector('.page-content[data-page="budgets"]').classList.contains('active')) {
@@ -1303,7 +1348,7 @@ async function handleDeleteBudget(budgetId, budgetCategory) {
         });
         window.budgets = budgets;
         updateDashboard();
-        showToast('Budget deleted successfully!', 'success');
+        showToast(`${budgetCategory} budget for ${currentMonth} deleted successfully!`, 'success');
         
         if (document.querySelector('.page-content[data-page="budgets"]').classList.contains('active')) {
             loadBudgetsPage();
@@ -1418,11 +1463,14 @@ function loadBudgetsPage() {
     const container = document.getElementById('budgetsGrid');
     if (!container) return;
     
+    const now = new Date();
+    const currentMonth = now.toLocaleString('default', { month: 'long', year: 'numeric' });
+    
     if (budgets.length === 0) {
         container.innerHTML = `
             <div class="card" style="text-align: center; padding: 3rem;">
                 <h3 style="margin-bottom: 1rem; color: var(--gray-400);">No Budgets Yet</h3>
-                <p style="color: var(--gray-500); margin-bottom: 2rem;">Create your first budget to start tracking your spending</p>
+                <p style="color: var(--gray-500); margin-bottom: 2rem;">Create your first budget to start tracking your ${currentMonth} spending</p>
                 <button class="btn-primary" onclick="showAddBudgetModal()">Create Budget</button>
             </div>
         `;
@@ -1457,22 +1505,21 @@ function loadBudgetsPage() {
                 
                 return `
                     <div class="card" style="border: 2px solid ${cardBorder}; ${percentage >= 100 ? 'background: rgba(239, 68, 68, 0.03);' : ''}; position: relative;">
-        <!-- Delete Button -->
-        <button onclick="handleDeleteBudget('${budget.id || budget._id}', '${budget.category}')" 
-                style="position: absolute; top: 1rem; right: 1rem; background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.5rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
-                onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.borderColor='var(--red)';"
-                onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';"
-                title="Delete Budget">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-            </svg>
-        </button>
-        
-        <!-- Rest of your existing card content -->
+                        <!-- Delete Button -->
+                        <button onclick="handleDeleteBudget('${budget.id || budget._id}', '${budget.category}')" 
+                                style="position: absolute; top: 1rem; right: 1rem; background: rgba(239, 68, 68, 0.1); color: var(--red); border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.5rem; border-radius: 6px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center;"
+                                onmouseover="this.style.background='rgba(239, 68, 68, 0.2)'; this.style.borderColor='var(--red)';"
+                                onmouseout="this.style.background='rgba(239, 68, 68, 0.1)'; this.style.borderColor='rgba(239, 68, 68, 0.3)';"
+                                title="Delete Budget">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
+                        
                         <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
                             <div>
                                 <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--gray-100); margin-bottom: 0.5rem;">${budget.category}</h3>
-                                <p style="font-size: 0.875rem; color: var(--gray-500);">Monthly Budget</p>
+                                <p style="font-size: 0.875rem; color: var(--gray-500);">${currentMonth} Budget</p>
                             </div>
                             <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
                                 <div style="width: 3rem; height: 3rem; border-radius: 0.5rem; background: ${color}20; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
@@ -1522,6 +1569,7 @@ function loadBudgetsPage() {
         </div>
     `;
 }
+
 
 // 🔍 DEBUG FUNCTION - Add this to dashboard.js
 function debugAIData() {

@@ -1,13 +1,27 @@
-// Sign In Page JavaScript
+// Sign In Page JavaScript - Email Only
 
 document.addEventListener('DOMContentLoaded', function() {
     redirectIfAuthenticated();
     
     const signInForm = document.getElementById('signInForm');
-    const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-    const resendOtpBtn = document.getElementById('resendOtpBtn');
     
-    let pendingSignInData = null;
+    // Toggle Password Visibility
+    const togglePassword = document.getElementById('togglePassword');
+    if (togglePassword) {
+        togglePassword.addEventListener('click', function() {
+            const passwordInput = document.getElementById('password');
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            // Update icon
+            const icon = this.querySelector('svg');
+            if (type === 'text') {
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+            } else {
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+            }
+        });
+    }
     
     // Forgot Password Functionality
     const forgotPasswordLink = document.querySelector('.forgot-link');
@@ -29,66 +43,20 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.textContent = 'Signing In...';
             
             try {
-                const emailMethod = document.getElementById('emailMethod').classList.contains('active');
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
                 
-                const signInData = {
-                    method: emailMethod ? 'email' : 'phone'
-                };
-                
-                if (emailMethod) {
-                    signInData.email = document.getElementById('email').value.trim();
-                    signInData.password = document.getElementById('password').value;
-                    
-                    // Direct email sign in
-                    const response = await apiRequest('/auth/signin', 'POST', signInData);
-                    
-                    if (response.success) {
-                        saveUserSession(response.token, response.user);
-                        showToast('Sign in successful!', 'success');
-                        
-                        setTimeout(() => {
-                            window.location.href = 'dashboard.html';
-                        }, 1000);
-                    }
-                } else {
-                    signInData.phone = document.getElementById('phone').value.trim();
-                    pendingSignInData = signInData;
-                    
-                    // Send OTP for phone sign in
-                    const response = await apiRequest('/auth/send-otp', 'POST', signInData);
-                    
-                    if (response.success) {
-                        const message = `Enter the verification code sent to ${signInData.phone}`;
-                        showOTPModal(message);
-                        showToast('Verification code sent!', 'success');
-                    }
+                // Validate inputs
+                if (!email || !password) {
+                    showToast('Please fill in all fields', 'error');
+                    return;
                 }
-            } catch (error) {
-                showToast(error.message || 'Sign in failed', 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
-            }
-        });
-    }
-    
-    // Handle OTP Verification for Phone Sign In
-    if (verifyOtpBtn) {
-        verifyOtpBtn.addEventListener('click', async function() {
-            const otp = getOTPValue();
-            
-            if (otp.length !== 6) {
-                showToast('Please enter complete OTP', 'error');
-                return;
-            }
-            
-            this.disabled = true;
-            this.textContent = 'Verifying...';
-            
-            try {
-                const response = await apiRequest('/auth/verify-signin-otp', 'POST', {
-                    ...pendingSignInData,
-                    otp
+                
+                // Direct email sign in
+                const response = await apiRequest('/auth/signin', 'POST', {
+                    email: email,
+                    password: password,
+                    method: 'email'
                 });
                 
                 if (response.success) {
@@ -100,36 +68,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1000);
                 }
             } catch (error) {
-                showToast(error.message || 'Verification failed', 'error');
-                this.disabled = false;
-                this.textContent = 'Verify';
-            }
-        });
-    }
-    
-    // Handle Resend OTP
-    if (resendOtpBtn) {
-        resendOtpBtn.addEventListener('click', async function() {
-            this.disabled = true;
-            this.textContent = 'Sending...';
-            
-            try {
-                const response = await apiRequest('/auth/send-otp', 'POST', pendingSignInData);
+                // Handle specific error messages from backend
+                let errorMessage = error.message || 'Sign in failed';
                 
-                if (response.success) {
-                    showToast('Verification code resent!', 'success');
-                    
-                    // Clear OTP inputs
-                    document.querySelectorAll('.otp-input').forEach(input => {
-                        input.value = '';
-                    });
-                    document.querySelector('.otp-input').focus();
+                if (error.message.includes('User not found')) {
+                    errorMessage = 'No account found with this email. Please sign up first.';
+                } else if (error.message.includes('Invalid password')) {
+                    errorMessage = 'Incorrect password. Please try again.';
+                } else if (error.message.includes('verify your account')) {
+                    errorMessage = 'Please verify your account before signing in.';
                 }
-            } catch (error) {
-                showToast(error.message || 'Failed to resend code', 'error');
+                
+                showToast(errorMessage, 'error');
             } finally {
-                this.disabled = false;
-                this.textContent = 'Resend Code';
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
     }
