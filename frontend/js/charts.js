@@ -463,6 +463,7 @@ function getSpendingData(transactions, period) {
 }
 
 // FIXED: Get daily spending data
+// FIXED: Get daily spending data
 function getDailySpendingData(transactions, days = 7) {
     const labels = [];
     const data = [];
@@ -472,10 +473,12 @@ function getDailySpendingData(transactions, days = 7) {
     for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
         
-        // Get date string for comparison (YYYY-MM-DD)
-        const dateString = date.toISOString().split('T')[0];
+        // 🔥 FIX: Get local date string to match transaction dates
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
         
         // Create label based on number of days
         let label;
@@ -493,7 +496,7 @@ function getDailySpendingData(transactions, days = 7) {
         
         labels.push(label);
         
-        // 🔥 FIX: Compare date strings (YYYY-MM-DD) to avoid timezone issues
+        // Compare date strings (YYYY-MM-DD)
         const daySpending = transactions
             .filter(transaction => {
                 const txDateString = new Date(transaction.date).toISOString().split('T')[0];
