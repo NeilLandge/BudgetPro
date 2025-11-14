@@ -116,6 +116,12 @@ function createSpendingChart(transactions) {
         return;
     }
     
+    // 🔥 CRITICAL: Destroy existing chart FIRST before any checks
+    if (spendingChart) {
+        spendingChart.destroy();
+        spendingChart = null;
+    }
+    
     // Clear any existing content
     ctx.innerHTML = '';
     
@@ -131,23 +137,47 @@ function createSpendingChart(transactions) {
     
     console.log('📊 Chart data:', { labels, data });
     
-    // 🔥 ADDED: Check if we have data to display
+    // 🔥 FIX: Check if we have data BEFORE creating canvas
     if (data.every(value => value === 0)) {
-        ctx.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray-500); text-align: center;">
-                <div>
-                    <p>No spending data for selected period</p>
-                    <p style="font-size: 0.875rem;">Try a different time range</p>
-                </div>
+        // Create a parent div if ctx is a canvas
+        const parent = ctx.parentElement;
+        
+        // Remove canvas and replace with message
+        ctx.remove();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'spendingChart';
+        messageDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; height: 100%; min-height: 300px; color: #9ca3af; text-align: center;';
+        messageDiv.innerHTML = `
+            <div>
+                <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No spending data for selected period</p>
+                <p style="font-size: 0.875rem;">Try a different time range or add some transactions</p>
             </div>
         `;
+        
+        parent.appendChild(messageDiv);
+        console.log('📊 Showing empty state for spending chart');
         return;
     }
     
-    if (spendingChart) {
-        spendingChart.destroy();
+    // 🔥 FIX: Ensure we have a canvas element
+    if (ctx.tagName !== 'CANVAS') {
+        const parent = ctx.parentElement;
+        ctx.remove();
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = 'spendingChart';
+        parent.appendChild(canvas);
+        
+        // Re-get the canvas element
+        const newCtx = document.getElementById('spendingChart');
+        createChartOnCanvas(newCtx, labels, data);
+    } else {
+        createChartOnCanvas(ctx, labels, data);
     }
-    
+}
+
+function createChartOnCanvas(ctx, labels, data) {
     spendingChart = new Chart(ctx, {
         type: 'line',
         data: {
@@ -234,6 +264,12 @@ function createCategoryChart(transactions) {
         return;
     }
     
+    // 🔥 CRITICAL: Destroy existing chart FIRST
+    if (categoryChart) {
+        categoryChart.destroy();
+        categoryChart = null;
+    }
+    
     // Clear any existing content
     ctx.innerHTML = '';
     
@@ -246,24 +282,43 @@ function createCategoryChart(transactions) {
         totalAmount: categoryData.data.reduce((a, b) => a + b, 0)
     });
     
-    // 🔥 ADDED: Check if we have data to display
+    // 🔥 FIX: Check if we have data BEFORE creating canvas
     if (categoryData.data.length === 0 || categoryData.data.every(value => value === 0)) {
-        ctx.innerHTML = `
-            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--gray-500); text-align: center;">
-                <div>
-                    <p>No category data for selected period</p>
-                    <p style="font-size: 0.875rem;">Try a different time range</p>
-                </div>
+        const parent = ctx.parentElement;
+        ctx.remove();
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.id = 'categoryChart';
+        messageDiv.style.cssText = 'display: flex; align-items: center; justify-content: center; height: 100%; min-height: 300px; color: #9ca3af; text-align: center;';
+        messageDiv.innerHTML = `
+            <div>
+                <p style="font-size: 1.125rem; margin-bottom: 0.5rem;">No category data for selected period</p>
+                <p style="font-size: 0.875rem;">Try a different time range or add some transactions</p>
             </div>
         `;
+        
+        parent.appendChild(messageDiv);
+        console.log('📊 Showing empty state for category chart');
         return;
     }
     
-    if (categoryChart) {
-        categoryChart.destroy();
+    // 🔥 FIX: Ensure we have a canvas element
+    if (ctx.tagName !== 'CANVAS') {
+        const parent = ctx.parentElement;
+        ctx.remove();
+        
+        const canvas = document.createElement('canvas');
+        canvas.id = 'categoryChart';
+        parent.appendChild(canvas);
+        
+        const newCtx = document.getElementById('categoryChart');
+        createCategoryChartOnCanvas(newCtx, categoryData);
+    } else {
+        createCategoryChartOnCanvas(ctx, categoryData);
     }
-    
-    // Define colors for categories
+}
+
+function createCategoryChartOnCanvas(ctx, categoryData) {
     const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#06b6d4', '#84cc16', '#f97316', '#6366f1'];
     
     categoryChart = new Chart(ctx, {
@@ -317,100 +372,148 @@ function createCategoryChart(transactions) {
     });
 }
 
-// Filter transactions by time period
+// 🔥 COMPLETE FIX: Work entirely in UTC to avoid timezone issues
 function filterTransactionsByPeriod(transactions, period) {
     const now = new Date();
-    const startDate = new Date();
     
     console.log(`🕒 Filtering transactions for period: ${period}`);
+    console.log(`📅 Current local time: ${now.toLocaleString()}`);
     
+    // Calculate how many days back to go
+    let daysBack;
     switch (period) {
         case '7days':
-            startDate.setDate(now.getDate() - 7);
+            daysBack = 6; // 6 days ago + today = 7 days
             break;
         case '30days':
-            startDate.setDate(now.getDate() - 30);
+            daysBack = 29; // 29 days ago + today = 30 days
             break;
         case '90days':
-            startDate.setDate(now.getDate() - 90);
+            daysBack = 89; // 89 days ago + today = 90 days
             break;
         case '1year':
-            startDate.setFullYear(now.getFullYear() - 1);
+            daysBack = 365; // 1 year
             break;
         default:
-            startDate.setDate(now.getDate() - 7);
+            daysBack = 6;
     }
     
+    // Create start date by going back X days from today
+    const startDate = new Date(now);
+    startDate.setDate(startDate.getDate() - daysBack);
+    
+    // Get YYYY-MM-DD strings for comparison (timezone-independent)
+    const startDateString = startDate.toISOString().split('T')[0];
+    const endDateString = now.toISOString().split('T')[0];
+    
+    console.log(`📅 Date range: ${startDateString} to ${endDateString} (inclusive)`);
+    
     const filtered = transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
-        const isInPeriod = transactionDate >= startDate && transactionDate <= now;
+        const txDateString = new Date(transaction.date).toISOString().split('T')[0];
+        const isInPeriod = txDateString >= startDateString && txDateString <= endDateString;
         const isExpense = transaction.type === 'expense';
+        
+        if (isInPeriod && isExpense) {
+            console.log(`✅ Including: ${transaction.description || 'No description'} - ${txDateString} - ₹${transaction.amount}`);
+        } else if (isExpense) {
+            console.log(`❌ Excluding: ${transaction.description || 'No description'} - ${txDateString} (outside ${startDateString} to ${endDateString})`);
+        }
         
         return isInPeriod && isExpense;
     });
     
-    console.log(`📅 Date range: ${startDate.toLocaleDateString()} to ${now.toLocaleDateString()}`);
     console.log(`📊 Filtered ${filtered.length} expense transactions out of ${transactions.length} total`);
+    
+    if (filtered.length > 0) {
+        const uniqueDates = [...new Set(filtered.map(t => new Date(t.date).toISOString().split('T')[0]))];
+        console.log(`📅 Unique dates in filtered data:`, uniqueDates.sort());
+    } else {
+        console.log('❌ No transactions found in the selected period');
+        
+        // Debug: Show all expense transaction dates
+        const allExpenseDates = transactions
+            .filter(t => t.type === 'expense')
+            .map(t => new Date(t.date).toISOString().split('T')[0]);
+        console.log('📅 All expense transaction dates:', allExpenseDates);
+    }
     
     return filtered;
 }
 
 // Get spending data for chart based on time period
 function getSpendingData(transactions, period) {
-    const labels = [];
-    const data = [];
-    
-    let daysToShow = 7; // Default
+    console.log(`📈 Generating spending data for period: ${period}`);
     
     switch (period) {
         case '7days':
-            daysToShow = 7;
-            break;
+            // Show 7 individual days
+            return getDailySpendingData(transactions, 7);
         case '30days':
-            daysToShow = 30;
-            break;
+            // Show 30 individual days (not weeks!)
+            return getDailySpendingData(transactions, 30);
         case '90days':
-            // For 90 days, show data by week
-            return getWeeklySpendingData(transactions, 12); // 12 weeks ≈ 90 days
+            // Show weekly data for 90 days (about 13 weeks)
+            return getWeeklySpendingData(transactions, 13);
         case '1year':
-            // For 1 year, show data by month
-            return getMonthlySpendingData(transactions, 12); // 12 months
+            // Show 12 months
+            return getMonthlySpendingData(transactions, 12);
         default:
-            daysToShow = 7;
+            return getDailySpendingData(transactions, 7);
     }
+}
+
+// FIXED: Get daily spending data
+function getDailySpendingData(transactions, days = 7) {
+    const labels = [];
+    const data = [];
     
-    console.log(`📈 Generating ${daysToShow} days of spending data`);
+    console.log(`📈 Generating ${days} days of daily spending data from ${transactions.length} filtered transactions`);
     
-    // Generate daily data
-    for (let i = daysToShow - 1; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
         const date = new Date();
         date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        // Get date string for comparison (YYYY-MM-DD)
         const dateString = date.toISOString().split('T')[0];
         
+        // Create label based on number of days
         let label;
-        if (daysToShow <= 30) {
-            label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        if (days <= 7) {
+            label = date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                day: 'numeric' 
+            });
         } else {
-            label = date.toLocaleDateString('en-US', { month: 'short' });
+            label = date.toLocaleDateString('en-US', { 
+                day: 'numeric',
+                month: 'short'
+            });
         }
         
         labels.push(label);
         
-        // Calculate total expenses for this day
+        // 🔥 FIX: Compare date strings (YYYY-MM-DD) to avoid timezone issues
         const daySpending = transactions
             .filter(transaction => {
-                const transactionDate = new Date(transaction.date).toISOString().split('T')[0];
-                return transactionDate === dateString;
+                const txDateString = new Date(transaction.date).toISOString().split('T')[0];
+                return txDateString === dateString;
             })
             .reduce((total, transaction) => total + transaction.amount, 0);
         
         data.push(daySpending);
+        
+        if (daySpending > 0) {
+            console.log(`📅 ${dateString} (${label}): ₹${daySpending.toFixed(2)}`);
+        }
     }
     
+    console.log(`📊 Generated ${data.length} data points, ${data.filter(d => d > 0).length} with spending`);
     return { labels, data };
 }
 
 // Get weekly spending data
+// Get weekly spending data - FIXED VERSION
 function getWeeklySpendingData(transactions, weeks = 12) {
     const labels = [];
     const data = [];
@@ -418,13 +521,19 @@ function getWeeklySpendingData(transactions, weeks = 12) {
     console.log(`📈 Generating ${weeks} weeks of spending data`);
     
     for (let i = weeks - 1; i >= 0; i--) {
+        // Calculate week range
         const weekEnd = new Date();
         weekEnd.setDate(weekEnd.getDate() - (i * 7));
+        weekEnd.setHours(23, 59, 59, 999); // End of day
+        
         const weekStart = new Date(weekEnd);
         weekStart.setDate(weekStart.getDate() - 6);
+        weekStart.setHours(0, 0, 0, 0); // Start of day
         
-        const label = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' - ' + 
-                     weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        // Format label
+        const startLabel = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const endLabel = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const label = `${startLabel} - ${endLabel}`;
         
         labels.push(label);
         
@@ -437,8 +546,11 @@ function getWeeklySpendingData(transactions, weeks = 12) {
             .reduce((total, transaction) => total + transaction.amount, 0);
         
         data.push(weekSpending);
+        
+        console.log(`📅 Week ${label}: ₹${weekSpending.toFixed(2)}`);
     }
     
+    console.log(`📊 Final weekly data:`, { labels, data });
     return { labels, data };
 }
 
